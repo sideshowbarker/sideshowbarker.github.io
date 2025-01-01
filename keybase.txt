@@ -1,0 +1,54 @@
+==================================================================
+https://keybase.io/sideshowbarker
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://sideshowbarker.net
+  * I am sideshowbarker (https://keybase.io/sideshowbarker) on keybase.
+  * I have a public key ASBQuvkHfSr7wE6StgHBTxf5rczbJSQB_4Tk_9XvG5oRMwo
+
+To do so, I am signing this object:
+
+{
+    "body": {
+        "key": {
+            "eldest_kid": "0101726f36468e8a3b3cf6e2e8a64f78f69eefd4bf5a04a2afb599f1a58715380a090a",
+            "host": "keybase.io",
+            "kid": "012050baf9077d2afbc04e92b601c14f17f9adccdb252401ff84e4ffd5ef1b9a11330a",
+            "uid": "6daec14eae4e2bfbe762080429547119",
+            "username": "sideshowbarker"
+        },
+        "service": {
+            "hostname": "sideshowbarker.net",
+            "protocol": "https:"
+        },
+        "type": "web_service_binding",
+        "version": 1
+    },
+    "client": {
+        "name": "keybase.io go client",
+        "version": "1.0.18"
+    },
+    "ctime": 1483054075,
+    "expire_in": 504576000,
+    "merkle_root": {
+        "ctime": 1483053935,
+        "hash": "460f1d22f742b5aa12562362f3ab71f94523be457de01fce1129d06b5fde6178d8798a25ab8d8c772cd1d8e4eff3d30832065d599d0d04b96d517549951eeded",
+        "seqno": 778547
+    },
+    "prev": "6fe688cdfca163b5a00fcd9e8da5b2512228437ab81390fe9582bc862f768f22",
+    "seqno": 7,
+    "tag": "signature"
+}
+
+which yields the signature:
+
+hKRib2R5hqhkZXRhY2hlZMOpaGFzaF90eXBlCqNrZXnEIwEgULr5B30q+8BOkrYBwU8X+a3M2yUkAf+E5P/V7xuaETMKp3BheWxvYWTFAwB7ImJvZHkiOnsia2V5Ijp7ImVsZGVzdF9raWQiOiIwMTAxNzI2ZjM2NDY4ZThhM2IzY2Y2ZTJlOGE2NGY3OGY2OWVlZmQ0YmY1YTA0YTJhZmI1OTlmMWE1ODcxNTM4MGEwOTBhIiwiaG9zdCI6ImtleWJhc2UuaW8iLCJraWQiOiIwMTIwNTBiYWY5MDc3ZDJhZmJjMDRlOTJiNjAxYzE0ZjE3ZjlhZGNjZGIyNTI0MDFmZjg0ZTRmZmQ1ZWYxYjlhMTEzMzBhIiwidWlkIjoiNmRhZWMxNGVhZTRlMmJmYmU3NjIwODA0Mjk1NDcxMTkiLCJ1c2VybmFtZSI6InNpZGVzaG93YmFya2VyIn0sInNlcnZpY2UiOnsiaG9zdG5hbWUiOiJzaWRlc2hvd2Jhcmtlci5uZXQiLCJwcm90b2NvbCI6Imh0dHBzOiJ9LCJ0eXBlIjoid2ViX3NlcnZpY2VfYmluZGluZyIsInZlcnNpb24iOjF9LCJjbGllbnQiOnsibmFtZSI6ImtleWJhc2UuaW8gZ28gY2xpZW50IiwidmVyc2lvbiI6IjEuMC4xOCJ9LCJjdGltZSI6MTQ4MzA1NDA3NSwiZXhwaXJlX2luIjo1MDQ1NzYwMDAsIm1lcmtsZV9yb290Ijp7ImN0aW1lIjoxNDgzMDUzOTM1LCJoYXNoIjoiNDYwZjFkMjJmNzQyYjVhYTEyNTYyMzYyZjNhYjcxZjk0NTIzYmU0NTdkZTAxZmNlMTEyOWQwNmI1ZmRlNjE3OGQ4Nzk4YTI1YWI4ZDhjNzcyY2QxZDhlNGVmZjNkMzA4MzIwNjVkNTk5ZDBkMDRiOTZkNTE3NTQ5OTUxZWVkZWQiLCJzZXFubyI6Nzc4NTQ3fSwicHJldiI6IjZmZTY4OGNkZmNhMTYzYjVhMDBmY2Q5ZThkYTViMjUxMjIyODQzN2FiODEzOTBmZTk1ODJiYzg2MmY3NjhmMjIiLCJzZXFubyI6NywidGFnIjoic2lnbmF0dXJlIn2jc2lnxEAICkn5E+7BzTWK3ar/A9i2/iZKgMzo/WvUEGig/3cTtyzVyBKh5zzi2wAaVHtjAF67/uYVdSgBLuNX7yKiRkICqHNpZ190eXBlIKRoYXNogqR0eXBlCKV2YWx1ZcQgl0SgfJuN4gwxim6Ban4iHRK07W5Hly9KAfOE14hmZdmjdGFnzQICp3ZlcnNpb24B
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/sideshowbarker
+
+==================================================================

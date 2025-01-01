@@ -1,0 +1,29 @@
+<!doctype html><meta charset=utf-8>
+<details id="Z">
+  <summary>details element that has another details element nested within<br>
+  </summary>
+  <details id="X">
+    <summary>└ details element that is nested inside another details element</summary>
+    Find me (first).
+    Some <span id=insideDetails>text with an ID</span>.
+  </details>
+</details>
+<details id="Y">
+  <summary>details element that is not nested inside another details element</summary>
+  Find me (second).
+</details>
+<details id="A">
+  <summary>details element with p child</summary>
+  <p>Find me (third).</p>
+</details>
+<details id="A">
+  <summary>details element in table</summary>
+  <table><tr><td>Find me (third).</table>
+</details>
+<table><tr><td>
+<details id="A">
+  <summary>details contents in table</summary>
+  Find me (third).
+</details>
+</table>
+<script>

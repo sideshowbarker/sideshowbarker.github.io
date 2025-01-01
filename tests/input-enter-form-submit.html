@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<form action="#"><input type="text"></form>
+<script>
+const input = document.querySelector("input");
+const form = document.querySelector("form");
+function done() {
+  document.body.append(document.createElement("br"));
+  document.body.append(document.createElement("br"), "PASS: Form submitted");
+  console.log("PASS: Form submitted");
+ }
+function checkKeyEvent() {
+  document.body.append(document.createElement("br"), "Key pressed:" + event.key);
+  console.log("Key pressed: " + event.key);
+ }
+input.addEventListener("keydown", checkKeyEvent);
+input.addEventListener("keypress", checkKeyEvent);
+form.addEventListener("submit", done);
+</script>

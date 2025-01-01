@@ -1,0 +1,143 @@
+body
+{ font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height:1.42857143;
+  color:#333;
+  background-color:#fff;
+}
+.container
+{margin-right:auto;margin-left:auto;padding-left:15px;padding-right:15px}
+
+@media (min-width:768px)
+{.container
+{width:750px}}
+@media (min-width:992px)
+{.container
+{width:970px}}
+@media (min-width:1200px)
+{.container
+{width:1170px}}
+
+.container:before,
+.container:after,
+.nav:before,
+.nav:after,
+.navbar:before,
+.navbar:after,
+.navbar-header:before,
+.navbar-header:after
+{content:" ";display:table}
+.container:after,
+.container-fluid:after,
+.nav:after,
+.navbar:after,
+.navbar-header:after,
+.panel-body:after
+{clear:both}
+
+body
+{margin:0}
+a
+{background:transparent}
+a:active,
+a:hover
+{outline:0}
+img
+{border:0}
+*
+{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}
+*:before,
+*:after
+{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}
+
+a
+{color:#428bca;text-decoration:none}
+a:hover,
+a:focus
+{color:#2a6496;text-decoration:underline}
+img
+{vertical-align:middle}
+p
+{margin:0 0 10px}
+.navbar
+{position:relative;min-height:55px;margin-bottom:20px;border:1px solid transparent}
+@media (min-width:768px)
+{.navbar
+{border-radius:4px}
+}
+@media (min-width:768px)
+{.navbar-header
+{float:left}
+}
+
+.container>.navbar-header
+{margin-right:-15px;margin-left:-15px}
+@media (min-width:768px)
+{.container>.navbar-header
+{margin-right:0;margin-left:0}
+}
+.navbar-fixed-top
+{position:fixed;right:0;left:0;z-index:1030}
+@media (min-width:768px)
+{.navbar-fixed-top
+{border-radius:0}
+}
+.navbar-fixed-top
+{top:0;border-width:0 0 1px}
+.navbar-brand
+{float:left;padding:15px 15px;font-size:24px;line-height:20px;height:50px}
+.navbar-brand:hover,
+.navbar-brand:focus
+{text-decoration:none}
+@media (min-width:768px)
+{.navbar>.container .navbar-brand,
+.navbar>.container-fluid .navbar-brand
+{margin-left:-15px}
+}
+
+html {
+    margin: 0 8px;
+}
+
+body {
+    margin: 0;
+}
+
+body > .container {
+  background-image: url("/images/smoker.svg");
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: 30% 12%;
+  min-height: 300px;
+}
+
+body > .container > p:first-child {
+  margin-top: 64px;
+}
+
+p {
+  color: #aaa;
+}
+
+p.link {
+  padding-left: 44px;
+}
+
+body {
+    padding-top: 70px;
+}
+
+.container {
+    max-width: 800px;
+}
+
+.navbar-inverse .navbar-brand {
+    color: #fff;
+}
+
+header.navbar-inverse {
+    background: linear-gradient(to bottom, rgb(7, 62, 128) 0px, rgb(0, 45, 80) 100%);
+}
+
+img[src="images/2014.jpg"] {
+  margin-top: 40px;
+}

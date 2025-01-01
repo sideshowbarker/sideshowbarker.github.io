@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>ServiceWorker-based notification</title>
+<script>
+navigator.serviceWorker.register('sw.js');
+Notification.requestPermission(function(result) {
+  if (result === 'granted') {
+    navigator.serviceWorker.ready.then(function(registration) {
+      registration.showNotification('Notification using ServiceWorker', {
+          body: 'Buzz! Buzz!',
+          icon: 'smoker.jpg',
+          vibrate: [200, 100, 200, 100, 200, 100, 200],
+      });
+    });
+  }
+});
+</script>

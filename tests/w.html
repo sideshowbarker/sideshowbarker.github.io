@@ -1,0 +1,19 @@
+<!doctype html>
+<script>
+fetch(
+  "https://en.wikipedia.org/w/api.php?action=query&titles=San_Francisco&prop=images&imlimit=20&origin=*&format=json&formatversion=2",
+  {
+    method: "GET",
+    headers: {
+      "User-Agent": "someone"
+    }
+  }
+)
+  .then(response => response.json())
+  .then(json => {
+    console.log(json);
+  })
+  .catch(error => {
+    console.log(error.message);
+  });
+</script>
