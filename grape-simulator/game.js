@@ -23,7 +23,7 @@ const tr = LANG.t;
 // ---- せってい（ブラウザに保存される） ----
 const SETTINGS_KEY = 'grape-simulator-settings';
 // 血の量、ケガのしやすさ、キャラの大きさ（はじめのズーム）、出てくる向き（0はランダム）、音楽、効果音、にじ色の血（ショップで買う）
-const settings = { blood: 1, damage: 1, size: 1, facing: 0, music: 2, sfx: 1, rainbow: 0 };
+const settings = { blood: 1, damage: 1, size: 1, facing: 0, music: 2, sfx: 1, rainbow: 0, tutorialSeen: 0, newsSeen: '' };
 try { Object.assign(settings, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); } catch (e) { /* 保存できないブラウザでも動く */ }
 function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* 同上 */ } }
 SND.setVolumes(settings.music, settings.sfx);
@@ -159,8 +159,8 @@ const ZOMBIE_FACES = {
 const NO_FACES = { ok: [], hurt: [], ko: [], dead: [] };
 const TORSO = ['.DD.'].concat(Array(6).fill('DSSD'), Array(3).fill('DPPD'), ['.DD.']);
 const ARM = Array(7).fill('PP');
-const LEG_UPPER = Array(8).fill('PPP');
-const LEG_LOWER = Array(7).fill('PPP.').concat(['PPPP']);   // 最後の行が足（前に出っぱる）
+const LEG_UPPER = Array(8).fill('PP');
+const LEG_LOWER = Array(7).fill('PP.').concat(['PPP']);   // 最後の行が足（前に出っぱる）
 const CHAR_COMMON = { K: '#111111', R: '#c0324a' };
 
 // 物のドット絵。色は OBJ_PAL。どれも右向きにかいてある（左向きのときは左右反転する）
@@ -184,6 +184,7 @@ const OBJ_PAL = {
   q: '#ff5040',                                  // うしろのライト
   v: '#6b7a3a', V: '#4a5628', x: '#8e9e52',      // 戦車の緑
   a: '#e8762a', A: '#b0521a',                    // オレンジ（チェーンソー）
+  p: '#a04ad0', t: '#4aa8ff', z: '#3d5c14', i: '#8e0b22',   // 注射の薬：どく、ますい、ゾンビ、ちをぬく
 };
 const KNIFE = [   // 右が刃先。左の4ドットが柄、右の8ドットが刃
   'hhhhWWWWWWW.',
@@ -256,6 +257,83 @@ const BARREL = [
   'KMmmmmsK',
   'KMmmmmmK',
   '.KKKKKK.',
+];
+const BAT = [
+  '.........hhhhhhhhhhhhh',
+  'hhhhhhhhhhhhhhhhhhhhhh',
+  'HHHHHHHHHHHHHHHHHHHHHH',
+  '.........HHHHHHHHHHHHH',
+];
+const CLEAVER = [
+  '....wWWWWWW.',
+  '....WWWWWWWW',
+  'hhhhWWWWWWWW',
+  'HHHHWWWWWWWW',
+  '....WWWWWWWW',
+  '....wwwwwww.',
+];
+const PAN = [
+  '.........ggGGGGgg.',
+  '........gGGGGGGGGg',
+  'hhhhhhhhgGGGsGGGGg',
+  'HHHHHHHHgGGGGGGGGg',
+  '........gGGGGGGGGg',
+  '.........ggGGGGgg.',
+];
+const SHOTGUN = [
+  '.......gggggggggggggggg.',
+  'hhhhhhGGGGGGGGGGGGGGGGGs',
+  'hhhhhhggggggggHHHHHHgggg',
+  '..hhhhgggg..............',
+  '...hh...................',
+];
+const DYNAMITE = [
+  '...f.',
+  '..f..',
+  '.KKK.',
+  'KrrrK',
+  'KrRrK',
+  'KyyyK',
+  'KyKyK',
+  'KyyyK',
+  'KrRrK',
+  'KrrrK',
+  '.KKK.',
+];
+const MOLOTOV = [
+  '..qy..',
+  '..fq..',
+  '..KK..',
+  '.KccK.',
+  '.KccK.',
+  'KccccK',
+  'KcaaaK',
+  'KaaaaK',
+  'KaaaaK',
+  'KaaaaK',
+  '.KKKK.',
+];
+const STONE = [
+  '.KKKKKKKKKK.',
+  'KsssGGGGGGgK',
+  'KsGGGGGGGGgK',
+  'KGGGgGGGGGgK',
+  'KGGGGGGGGggK',
+  'KGGGGGGgGGgK',
+  'KGGGGGGGGggK',
+  'KGgGGGGGGgGK',
+  '.KKKKKKKKKK.',
+];
+const ANVIL = [
+  'KKKKKKKKKKKKKKKK',
+  'KsssGGGGGGGGGGGK',
+  'KGGGGGGGGGGGGGGK',
+  '...KGGGGGGGGK...',
+  '...KgGGGGGGgK...',
+  '...KgGGGGGGgK...',
+  '..KGGGGGGGGGGK..',
+  '.KGGGGGGGGGGGGK.',
+  '.KKKKKKKKKKKKKK.',
 ];
 const SYRINGE = [   // 右が針
   'K..KKKKKKKK...',
@@ -640,14 +718,14 @@ const CHARS = {
 };
 
 // 体のつくり（ドット）。ドット絵の大きさと合わせてある
-const BODY = { head: 9, neck: 0.5, torso: [4, 11], arm: [2, 7], leg: [3, 8], shoulder: 1.2, hip: 0.8, armX: 0.6, legX: 0.8 };
+const BODY = { head: 9, neck: 0.5, torso: [4, 11], arm: [2, 7], leg: [2, 8], shoulder: 1.2, hip: 0.8, armX: 0.6, legX: 1 };
 const FOOT_BELOW_HEAD = BODY.head / 2 + BODY.neck + BODY.torso[1] - BODY.hip + 2 * BODY.leg[1];   // 頭の中心から足の裏まで
 const FIGURE_DOTS = FOOT_BELOW_HEAD + BODY.head / 2 + 2;                                         // へたまで入れた背の高さ
 const FIG_CENTER = (FOOT_BELOW_HEAD - BODY.head / 2 - 2) / 2;                                    // 頭の中心から体のまん中まで
 // 絵のどこを体の中心に合わせるか（ドット）
 const ANCHOR = {
   head: [4.5, 6.5], torso: [2, 5.5], armF: [1, 3.5], armB: [1, 3.5],
-  legUF: [1.5, 4], legUB: [1.5, 4], legLF: [1.5, 4], legLB: [1.5, 4],
+  legUF: [1, 4], legUB: [1, 4], legLF: [1, 4], legLB: [1, 4],
 };
 
 const SPRITES = {};
@@ -660,6 +738,13 @@ const OBJ_SPRITES = {
   truck: makeSprite(TRUCK, OBJ_PAL), truckGlass: makeSprite(TRUCK_GLASS, OBJ_PAL),
   bike: makeSprite(BIKE, OBJ_PAL), tank: makeSprite(TANK, OBJ_PAL),
   axe: makeSprite(AXE, OBJ_PAL), spear: makeSprite(SPEAR, OBJ_PAL),
+  bat: makeSprite(BAT, OBJ_PAL), cleaver: makeSprite(CLEAVER, OBJ_PAL), pan: makeSprite(PAN, OBJ_PAL),
+  shotgun: makeSprite(SHOTGUN, OBJ_PAL), dynamite: makeSprite(DYNAMITE, OBJ_PAL), molotov: makeSprite(MOLOTOV, OBJ_PAL),
+  stone: makeSprite(STONE, OBJ_PAL), anvil: makeSprite(ANVIL, OBJ_PAL),
+  syringePoison: makeSprite(SYRINGE.map((r) => r.replace(/e/g, 'p')), OBJ_PAL),
+  syringeSleep: makeSprite(SYRINGE.map((r) => r.replace(/e/g, 't')), OBJ_PAL),
+  syringeZombie: makeSprite(SYRINGE.map((r) => r.replace(/e/g, 'z')), OBJ_PAL),
+  syringeDraw: makeSprite(SYRINGE.map((r) => r.replace(/e/g, 'i')), OBJ_PAL),
   chainsaw: makeSprite(CHAINSAW, OBJ_PAL), chainsaw2: makeSprite(CHAINSAW_2, OBJ_PAL),
   grenade: makeSprite(GRENADE, OBJ_PAL), grenadeLit: makeSprite(GRENADE_LIT, OBJ_PAL),
   launcher: makeSprite(LAUNCHER, OBJ_PAL), rocket: makeSprite(ROCKET, OBJ_PAL), trampoline: makeSprite(TRAMPOLINE, OBJ_PAL),
@@ -721,13 +806,96 @@ function makeFigure(kind, s = SPRITES[kind]) {
   put('armB', 3, 12); put('armB', 3, 19);
   put('legUB', 3, 21); put('legLB', 3, 29);
   put('torso', 3, 11);
-  put('legUF', 4, 21); put('legLF', 4, 29);
+  put('legUF', 5, 21); put('legLF', 5, 29);
   put('head_ok', 0, 0);
   put('armF', 4, 12); put('armF', 4, 19);
   return c;
 }
 const FIGURES = {};
 for (const id of Object.keys(CHARS)) FIGURES[id] = makeFigure(id);
+
+// ---- 服 ----
+// 服は、キャラの部品の絵の上に重ねて描く絵。key はどの部品か（head, torso, armF/armB は手前・うしろのうで、legUF/legUB/legLF/legLB は足）、
+// seg でうでの上・下（armU, armL）をえらぶ。ox, oy は部品の絵の左上から数えた場所（ドット）。under なら、部品の下に描く。
+// slot は着る場所（head, body, back, legs。同じ場所には1つだけ）。guard はダメージを半分にする部品（ヘルメット、よろい）
+const CLOTH_PAL = { K: '#111111', r: '#d23a2a', R: '#8e1f16', y: '#f0c030', Y: '#b8901e', u: '#3c7dd9', U: '#24508f', g: '#6b737e', G: '#a9b2bd',
+                    s: '#e0e6ec', b: '#9c6b3f', B: '#5a3a1e', n: '#5f8f3a', N: '#3f6626', w: '#f5f5f5' };
+const CLOTHES = {
+  cap: { slot: 'head', name: 'ぼうし', layers: [
+    { key: 'head', ox: -1, oy: 0, rows: ['...KKKKK...', '..KrrrrrK..', '.KrrrrrrrKK'] },
+  ] },
+  helmet: { slot: 'head', name: 'ヘルメット', guard: 'head', layers: [
+    { key: 'head', ox: -1, oy: 0, rows: ['...KKKKK...', '..KyYyyyK..', '.KyyyyyyyK.', '.K.......K.', '.K.......K.'] },
+  ] },
+  crown: { slot: 'head', name: 'おうかん', layers: [
+    { key: 'head', ox: 1, oy: 0, rows: ['y.y.y.y', 'yyyyyyy', 'yryyyry'] },
+  ] },
+  shades: { slot: 'head', name: 'サングラス', layers: [
+    { key: 'head', ox: 4, oy: 3, rows: ['KKKKK'] },
+  ] },
+  shirt: { slot: 'body', name: 'あかいシャツ', layers: [
+    { key: 'torso', ox: 0, oy: 1, rows: ['RrrR', 'RrrR', 'RrrR', 'RrrR', 'RrrR', 'RrrR', 'RrrR'] },
+    { key: 'armF', seg: 'armU', ox: 0, oy: 0, rows: ['rr', 'rr', 'rR'] },
+    { key: 'armB', seg: 'armU', ox: 0, oy: 0, rows: ['rr', 'rr', 'rR'] },
+  ] },
+  jacket: { slot: 'body', name: 'あおいジャケット', layers: [
+    { key: 'torso', ox: 0, oy: 1, rows: ['UwwU', 'UuwU', 'UuwU', 'UuwU', 'UuwU', 'UuwU', 'UuwU', 'UuwU'] },
+    { key: 'armF', seg: 'armU', ox: 0, oy: 0, rows: ['uu', 'uu', 'uu', 'uu', 'uu', 'uu', 'uu'] },
+    { key: 'armB', seg: 'armU', ox: 0, oy: 0, rows: ['uu', 'uu', 'uu', 'uu', 'uu', 'uu', 'uu'] },
+    { key: 'armF', seg: 'armL', ox: 0, oy: 0, rows: ['uu', 'uu', 'uu', 'uu', 'uu', 'uu'] },
+    { key: 'armB', seg: 'armL', ox: 0, oy: 0, rows: ['uu', 'uu', 'uu', 'uu', 'uu', 'uu'] },
+  ] },
+  armor: { slot: 'body', name: 'よろい', guard: 'torso', layers: [
+    { key: 'torso', ox: 0, oy: 0, rows: ['.KK.', 'KGGK', 'KGsK', 'KGGK', 'KgGK', 'KGGK', 'KGsK', 'KGGK', 'KgGK', 'KGGK', '.KK.'] },
+    { key: 'armF', seg: 'armU', ox: 0, oy: 0, rows: ['Gs', 'GG', 'gG'] },
+    { key: 'armB', seg: 'armU', ox: 0, oy: 0, rows: ['Gs', 'GG', 'gG'] },
+  ] },
+  cape: { slot: 'back', name: 'マント', layers: [
+    { key: 'torso', under: true, ox: -3, oy: 1, rows: ['.RR', 'RrR', 'RrR', 'RrR', 'RrR', 'RrR', 'RrR', 'RrR', 'RrR', 'rRR', '..R'] },
+  ] },
+  jeans: { slot: 'legs', name: 'ジーンズ', layers: [
+    { key: 'legUF', ox: 0, oy: 0, rows: ['uu', 'uu', 'uu', 'uu', 'uu', 'uu', 'uu', 'uu'] },
+    { key: 'legUB', ox: 0, oy: 0, rows: ['uu', 'uu', 'uu', 'uu', 'uu', 'uu', 'uu', 'uu'] },
+    { key: 'legLF', ox: 0, oy: 0, rows: ['uu.', 'uu.', 'uu.', 'uu.', 'uu.', 'uu.', 'bb.', 'bbb'] },
+    { key: 'legLB', ox: 0, oy: 0, rows: ['uu.', 'uu.', 'uu.', 'uu.', 'uu.', 'uu.', 'bb.', 'bbb'] },
+  ] },
+  camo: { slot: 'legs', name: 'みどりのズボン', layers: [
+    { key: 'legUF', ox: 0, oy: 0, rows: ['nn', 'nN', 'nn', 'Nn', 'nn', 'nN', 'nn', 'Nn'] },
+    { key: 'legUB', ox: 0, oy: 0, rows: ['nn', 'nN', 'nn', 'Nn', 'nn', 'nN', 'nn', 'Nn'] },
+    { key: 'legLF', ox: 0, oy: 0, rows: ['nn.', 'Nn.', 'nn.', 'nN.', 'nn.', 'Nn.', 'BB.', 'BBB'] },
+    { key: 'legLB', ox: 0, oy: 0, rows: ['nn.', 'Nn.', 'nn.', 'nN.', 'nn.', 'Nn.', 'BB.', 'BBB'] },
+  ] },
+};
+for (const C of Object.values(CLOTHES)) {
+  for (const L of C.layers) {
+    L.img = makeSprite(L.rows, CLOTH_PAL);
+    if (/B$/.test(L.key)) {   // うしろがわのうでや足は、暗くする
+      const x = L.img.getContext('2d');
+      x.globalCompositeOperation = 'source-atop';
+      x.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      x.fillRect(0, 0, L.img.width, L.img.height);
+    }
+  }
+}
+// ひきだしの絵：ブドウが着た姿の、その服の場所だけを切りとる
+const CLOTH_CROP = { head: [0, 0, 13, 15], body: [0, 12, 13, 22], back: [0, 12, 13, 22], legs: [0, 22, 13, 19] };
+function clothIcon(id) {
+  const C = CLOTHES[id], full = document.createElement('canvas');
+  full.width = 13; full.height = 41;
+  const x = full.getContext('2d');
+  x.drawImage(FIGURES.grape, 2, 2);
+  const at = { head: [0, 0], torso: [3, 11], armFarmU: [4, 12], armFarmL: [4, 19], armBarmU: [3, 12], armBarmL: [3, 19],
+               legUF: [5, 21], legLF: [5, 29], legUB: [3, 21], legLB: [3, 29] };
+  for (const L of C.layers) {
+    const p = at[L.key + (L.seg || '')] || at[L.key];
+    x.drawImage(L.img, 2 + p[0] + L.ox, 2 + p[1] + L.oy);
+  }
+  const [cx, cy, cw, ch] = CLOTH_CROP[C.slot];
+  const c = document.createElement('canvas');
+  c.width = cw; c.height = ch;
+  c.getContext('2d').drawImage(full, cx, cy, cw, ch, 0, 0, cw, ch);
+  return c;
+}
 
 // ケガ（赤）とこげ（黒）の度合いぶん色を変えた絵。一度作ったら使い回す。
 const tintCache = new Map();
@@ -835,6 +1003,21 @@ const MAPS = [
     ],
     polys: [[[480, 396], [580, 366], [620, 366], [620, 396]]] },
 ];
+
+// マップの物は、キャラより大きく見えるように、ぜんぶ MAP_SCALE 倍にする（エンドレスは地面を自動で作るので、そのまま）
+const MAP_SCALE = 1.5;
+function scaleMap(m) {
+  const k = MAP_SCALE, r = (v) => Math.round(v * k);
+  const box = (o) => { const x1 = r(o.x + o.w), y1 = r(o.y + o.h); o.x = r(o.x); o.y = r(o.y); o.w = x1 - o.x; o.h = y1 - o.y; };
+  m.w = r(m.w); m.h = r(m.h); m.start = r(m.start);
+  for (const b of m.blocks) box(b);
+  for (const p of m.polys || []) for (const pt of p) { pt[0] = r(pt[0]); pt[1] = r(pt[1]); }
+  for (const sp of m.spikes || []) { const x1 = r(sp.x + sp.w); sp.x = r(sp.x); sp.y = r(sp.y); sp.w = x1 - sp.x; }
+  if (m.water) box(m.water);
+  for (const L of m.lava || []) box(L);
+  if (m.vent) { m.vent.x = r(m.vent.x); m.vent.y = r(m.vent.y); }
+}
+for (const m of MAPS) if (!m.endless) scaleMap(m);
 
 const makeRng = (seed) => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 function shadeColor(hex, amt) {
@@ -1379,10 +1562,11 @@ function makeChar(kind, x, y, opts = {}) {
   const ch = CHARS[kind];
   const tough = ch.tough || 1;
   const g = { kind, dead: false, cause: '', rise: 0, stun: 0, muscle: 1, guard: opts.guard || 0, touchStep: -99, held: 0, blood: 100,
-              healCool: 0, facing: opts.facing || settings.facing || (Math.random() < 0.5 ? 1 : -1),
+              healCool: 0, wear: {}, facing: opts.facing || settings.facing || (Math.random() < 0.5 ? 1 : -1),
               parts: [], joints: [], legs: [], comp: Composite.create(), head: null, torso: null };
   const u = PX, f = g.facing;
   const group = nextGroup--;
+  g.group = group;
   const phys = {
     collisionFilter: { group, category: CAT_BODY, mask: CAT_WORLD | CAT_BODY | CAT_VEH },
     friction: 0.8, frictionStatic: 1, restitution: 0.05, density: ch.density,
@@ -1475,7 +1659,8 @@ function updateMuscles(ts) {
       const s = MUSCLE[pl.kind] * (pl.kind === 'arm' ? 1 : support) * g.muscle * ts;
       if (s <= 0) continue;
       const av = Body.getAngularVelocity(p);
-      let next = av * (1 - 0.25 * s) - wrapAngle(p.angle) * 0.2 * s;
+      const goal = g.grip && pl.sprite === 'armF' ? -1.4 * g.facing : 0;   // 武器を持っている手は、前にのばす
+      let next = av * (1 - 0.25 * s) - wrapAngle(p.angle - goal) * 0.2 * s;
       // 立つ力だけでは、MAX_SPIN より速くは回せない
       if (Math.abs(next) > MAX_SPIN && Math.abs(next) > Math.abs(av)) next = Math.sign(next) * Math.max(MAX_SPIN, Math.abs(av));
       Body.setAngularVelocity(p, next);
@@ -1519,7 +1704,7 @@ function updateJoints() {
 // 刃（や注射の針）なら「切る」、それ以外は「ぶつかる」。
 function contact(g, part, other, speed, at) {
   const op = other.plugin || {};
-  if (op.needle && onEdge(other, at, op.needle)) { heal(g, at); return; }
+  if (op.needle && onEdge(other, at, op.needle)) { inject(g, at, op.needle.kind); return; }
   if (op.blade && (op.blade.all || onEdge(other, at, op.blade))) { cut(g, part, speed, at, op.blade); return; }
   if (op.owner && op.owner.T.bouncy) return;   // トランポリンはやわらかいので、ぶつかってもケガしない
   if (g.guard > 0 && other.isStatic) return;   // 出てきたばかりのキャラは、最初の着地ではケガしない
@@ -1545,7 +1730,7 @@ function onEdge(body, at, edge) {
 function hit(g, part, speed, at, other) {
   const pl = part.plugin;
   const massK = other.isStatic ? 1 : clamp(Math.sqrt(other.mass / (part.mass * 2)), 0.3, 2);
-  const dmg = (speed * speed - HURT * HURT) * HURT_K * PART_FACTOR[pl.kind] * massK * settings.damage;
+  const dmg = (speed * speed - HURT * HURT) * HURT_K * PART_FACTOR[pl.kind] * massK * settings.damage * (CHARS[g.kind].sparks ? 0.5 : 1);   // ロボは丈夫
   if (dmg < 1) return;
   if (dmg > 70) pl.jointDmg += dmg - 70;   // ものすごい衝撃は関節もこわす
   if (other.isStatic) g.fallStep = stepCount;   // このまま死んだら「落ちて死んだ」（クエスト）
@@ -1566,6 +1751,12 @@ function cut(g, part, speed, at, blade) {
   if (speed <= CUT) return;
   const pl = part.plugin;
   const dmg = (speed - CUT) * CUT_K * blade.sharp * PART_FACTOR[pl.kind] * settings.damage;
+  if (CHARS[g.kind].sparks) {   // ロボは、刃ではほとんど切れない（血も出ないし、関節もこわれない）
+    spawnSparks(at.x, at.y, 4);
+    SND.play('metal', 0.6);
+    hurtPart(g, part, dmg * 0.1, at, 0, 'cut');
+    return;
+  }
   pl.jointDmg += dmg * (blade.chop || 1);
   pl.bleed += 0.35 + dmg * 0.012;
   SND.play('stab', clamp(dmg / 25, 0.3, 1));
@@ -1575,7 +1766,7 @@ function cut(g, part, speed, at, blade) {
 // 弾が当たった
 function shot(g, part, at, dir, power) {
   const pl = part.plugin;
-  const dmg = power * (pl.kind === 'head' ? 1.5 : PART_FACTOR[pl.kind]) * settings.damage;
+  const dmg = power * (pl.kind === 'head' ? 1.5 : PART_FACTOR[pl.kind]) * settings.damage * (CHARS[g.kind].sparks ? 0.6 : 1);
   pl.jointDmg += dmg * 0.7;
   pl.bleed += 0.5;
   const v = Body.getVelocity(part);
@@ -1599,6 +1790,7 @@ function blast(g, part, f) {
 // 刃で切られたり刺されたりしても、それだけでは倒れない（手足がおれたり、とれたりすると倒れる）。
 function hurtPart(g, part, dmg, at, nBlood, how) {
   const pl = part.plugin;
+  dmg *= guard(g, part);
   pl.hp -= dmg;
   pl.hurt = Math.min(1, pl.hurt + dmg / 60);
   if (!g.dead && how !== 'cut' && how !== 'pull') {
@@ -1705,6 +1897,8 @@ function heal(g, at) {
   }
   g.blood = 100;
   g.stun = 0;
+  g.fire = 0;
+  g.poison = 0;
   const revived = g.dead && !g.head.plugin.detached;
   if (revived) { g.dead = false; g.cause = ''; g.guard = 60; SHOP.event('revive'); }
   for (let i = 0; i < 14; i++) {
@@ -1715,10 +1909,77 @@ function heal(g, at) {
   say(revived ? '生き返った！' : '元気になった！', g.head.position.x, g.head.position.y - 50, '#7dff7a');
 }
 
+// 注射の針が刺さった：kind は heal（回復）、poison（どく）、sleep（ねむらせる）、zombie（ゾンビにする）、draw（ちをぬく）
+function inject(g, at, kind = 'heal') {
+  if (g.injCool > 0) return;
+  if (CHARS[g.kind].sparks) {   // ロボには、注射の針が入らない
+    g.injCool = 40;
+    SND.play('metal', 0.5);
+    say('ロボには きかない！', g.head.position.x, g.head.position.y - 50, '#dddddd');
+    return;
+  }
+  if (kind === 'heal') { heal(g, at); return; }
+  g.injCool = 40;
+  SND.play('click', 0.7);
+  const hx = g.head.position.x, hy = g.head.position.y - 50;
+  if (kind === 'poison' && !g.dead) { g.poison = 900; say('どく…', hx, hy, '#c07aff'); }
+  else if (kind === 'sleep' && !g.dead) { g.stun = 900; say('ぐー…', hx, hy, '#7ab8ff'); }
+  else if (kind === 'draw' && !g.dead) { g.blood = Math.max(0, g.blood - 60); bleed(g, at.x, at.y, 14); say('ちがぬけた…', hx, hy, '#ff6060'); }
+  else if (kind === 'zombie' && g.kind !== 'zombie' && !CHARS[g.kind].sparks) {
+    g.kind = 'zombie';
+    if (g.dead && !g.head.plugin.detached) rise(g); else say('ゾンビになった！', hx, hy, '#9dff8a');
+  }
+}
+
+// 火：もえている間、体の部品がこげて、ケガをする（水に入ると消える）。しかばねも、こげる
+const FIRE_TIME = 420, FIRE_DAMAGE = 0.3;
+function ignite(g) {
+  const already = g.fire > 0;
+  g.fire = FIRE_TIME;
+  if (already) return;
+  SND.play('sizzle', 0.8);
+  if (!g.dead) sayFor(g, CHARS[g.kind].sparks ? 'ジュッ' : 'あちっ！', g.head.position.x, g.head.position.y - 40);
+}
+function updateFire(g, ts) {
+  g.fire -= ts;
+  const L = liquidAt(g.torso.position.x, g.torso.position.y);
+  if (L && L.kind === 'water') { g.fire = 0; sizzle(g.torso.position.x, L.y); return; }
+  if (stepCount % 10 === 0) SND.play('sizzle', 0.25);
+  for (const p of g.parts) {
+    const pl = p.plugin;
+    if (pl.detached) continue;
+    pl.burn = Math.min(1, pl.burn + 0.004 * ts);
+    if (Math.random() < 0.15 * ts) {
+      addFx({ x: p.position.x + rand(-8, 8), y: p.position.y + rand(-8, 8), vx: rand(-0.5, 0.5), vy: rand(-2.5, -1), g: -0.02, drag: 0.97,
+              life: rand(15, 35), size: PX * rand(1, 2), colors: ['#fff3b0', '#ffd24a', '#ff8a1f', '#e8501a', '#5a4a44'] });
+    }
+    if (g.dead) continue;
+    pl.hp -= FIRE_DAMAGE * ts * settings.damage;
+    pl.hurt = Math.min(1, pl.hurt + 0.002 * ts);
+    checkPart(g, p);
+    if (g.dead) break;
+  }
+}
+// 火炎びんが割れた：まわりのキャラに火がつく
+function firebomb(x, y, power) {
+  const R = 40 * PX * power;
+  for (const g of chars) if (g.parts.some((p) => Math.hypot(p.position.x - x, p.position.y - y) < R)) ignite(g);
+  for (let i = 0; i < 34; i++) {
+    const a = rand(Math.PI, Math.PI * 2), sp = rand(1, 7) * power;
+    addFx({ x: x + rand(-10, 10), y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 0.05, drag: 0.94, life: rand(25, 55), size: PX * rand(1.5, 3),
+            colors: ['#fff3b0', '#ffd24a', '#ff8a1f', '#e8501a', '#5a4a44'] });
+  }
+  scorch(x, y, Math.round(R / PX * 0.3));
+  SND.play('boom', 0.4);
+  SND.play('sizzle', 0.9);
+}
+
 // 出血・ケガの回復・出血で死ぬ
 function updateChars(ts) {
   for (const g of chars) {
     if (g.healCool > 0) g.healCool -= ts;
+    if (g.injCool > 0) g.injCool -= ts;
+    if (g.grip && g.grip.hand.plugin.detached) unequip(g);
     let bleeding = 0;
     for (const p of g.parts) {
       const pl = p.plugin;
@@ -1733,9 +1994,22 @@ function updateChars(ts) {
         if (pl.hurt > 0) pl.hurt = Math.max(0, pl.hurt - 0.0005 * ts);
       }
     }
+    if (g.fire > 0) updateFire(g, ts);
     if (g.dead) {
+      g.poison = 0;
       if (CHARS[g.kind].undead && !g.head.plugin.detached && (g.rise += ts) > RISE_TIME) rise(g);
       continue;
+    }
+    if (g.poison > 0) {   // どく：血がへって、顔色がわるくなる
+      g.poison -= ts;
+      g.blood -= 0.12 * ts;
+      g.head.plugin.hurt = Math.max(g.head.plugin.hurt, 0.5);
+      if (Math.random() < 0.05 * ts) {
+        addFx({ x: g.head.position.x + rand(-10, 10), y: g.head.position.y - 10, vx: rand(-0.3, 0.3), vy: rand(-1.5, -0.5), g: 0, drag: 0.98,
+                life: rand(25, 45), size: PX * rand(0.8, 1.4), colors: ['#c07aff', '#a04ad0', '#6a2a90'] });
+      }
+      if (g.blood <= BLOOD_DEAD) kill(g, 'poison');
+      if (g.dead) continue;
     }
     g.blood -= bleeding * 0.03 * (CHARS[g.kind].bleedRate || 1) * ts;
     if (bleeding < 0.05) g.blood = Math.min(100, g.blood + 0.004 * ts);
@@ -1809,6 +2083,12 @@ const THINGS = {
               blade: { from: 7, sharp: 1.2 }, stick: 12 },
   chainsaw: { tab: 'weapons', name: 'チェーンソー', sprite: 'chainsaw', rects: [[0, 2, 10, 6, 0.004], [10, 3, 16, 3, 0.002]], layer: 2,
               mat: 'metal', saw: { from: -3, sharp: 1.2 } },
+  bat:      { tab: 'weapons', name: 'バット', sprite: 'bat', rects: [[0, 1, 9, 2, 0.001], [9, 0, 13, 4, 0.004]], layer: 2, mat: 'wood' },
+  cleaver:  { tab: 'weapons', name: 'ほうちょう', sprite: 'cleaver', rects: [[0, 2, 4, 2, 0.001], [4, 0, 8, 6, 0.003]], layer: 2, mat: 'metal',
+              blade: { from: -2, sharp: 1.3, chop: 1.5 } },
+  pan:      { tab: 'weapons', name: 'フライパン', sprite: 'pan', rects: [[0, 2, 8, 2, 0.001], [8, 0, 10, 6, 0.006]], layer: 2, mat: 'metal' },
+  shotgun:  { tab: 'guns', name: 'ショットガン', sprite: 'shotgun', rects: [[0, 0, 24, 3], [0, 3, 7, 2]], density: 0.003, layer: 2, mat: 'metal',
+              gun: { muzzle: [24, 1.5], power: 14, pellets: 7, spread: 0.16, recoil: 6, sound: 'bang' } },
   pistol:   { tab: 'guns', name: 'ピストル', sprite: 'pistol', rects: [[0, 0, 11, 3], [1, 3, 5, 3]], density: 0.003, layer: 2, mat: 'metal',
               gun: { muzzle: [11, 1], power: 30, recoil: 4, sound: 'bang' } },
   mgun:     { tab: 'guns', name: 'マシンガン', sprite: 'mgun', rects: [[0, 1, 20, 3], [0, 4, 9, 2, 0.008]], density: 0.003, layer: 2, mat: 'metal',
@@ -1821,6 +2101,10 @@ const THINGS = {
               bomb: { fuse: 20, power: 1.3, impact: 12 } },
   grenade:  { tab: 'bombs', name: '手りゅう弾', sprite: 'grenade', litSprite: 'grenadeLit', rects: [[1, 3, 6, 6]], density: 0.004,
               layer: 1, mat: 'metal', bomb: { fuse: 120, power: 0.9, pin: true } },
+  dynamite: { tab: 'bombs', name: 'ダイナマイト', sprite: 'dynamite', rects: [[0, 2, 5, 9]], density: 0.003, layer: 1, mat: 'wood',
+              bomb: { fuse: 150, power: 1.2, tip: [3.5, 0.5] } },
+  molotov:  { tab: 'bombs', name: '火炎びん', sprite: 'molotov', rects: [[0, 2, 6, 9]], density: 0.002, layer: 1, mat: 'metal',
+              bomb: { fuse: 120, power: 1, fire: true, impact: 7, tip: [2.5, 0.5] } },
   car:      { tab: 'vehicles', name: '車', vehicle: 'car' },
   truck:    { tab: 'vehicles', name: 'トラック', vehicle: 'truck' },
   bike:     { tab: 'vehicles', name: 'バイク', vehicle: 'bike' },
@@ -1829,8 +2113,18 @@ const THINGS = {
   barrel:   { tab: 'things', name: 'ドラム缶', sprite: 'barrel', rects: [[0, 0, 8, 11]], density: 0.006, layer: 0, mat: 'metal' },
   ball:     { tab: 'things', name: 'ボール', sprite: 'ball', circle: 5, density: 0.0006, restitution: 0.85, layer: 0, mat: 'rubber' },
   ironball: { tab: 'things', name: '鉄球', sprite: 'ironball', circle: 6, density: 0.02, layer: 0, mat: 'metal' },
-  syringe:  { tab: 'things', name: '回復の注射', sprite: 'syringe', rects: [[0, 0, 14, 3]], density: 0.002, layer: 2, mat: 'metal',
+  stone:    { tab: 'things', name: 'いし', sprite: 'stone', rects: [[0, 0, 12, 9]], density: 0.012, layer: 0, mat: 'metal' },
+  anvil:    { tab: 'things', name: 'かなとこ', sprite: 'anvil', rects: [[0, 0, 16, 3], [3, 3, 10, 3], [1, 6, 14, 3]], density: 0.03, layer: 0, mat: 'metal' },
+  syringe:  { tab: 'syringes', name: '回復の注射', sprite: 'syringe', rects: [[0, 0, 14, 3]], density: 0.002, layer: 2, mat: 'metal',
               needle: 4 },
+  syringePoison: { tab: 'syringes', name: 'どくの注射', sprite: 'syringePoison', rects: [[0, 0, 14, 3]], density: 0.002, layer: 2, mat: 'metal',
+                   needle: 4, inject: 'poison' },
+  syringeSleep:  { tab: 'syringes', name: 'ますいの注射', sprite: 'syringeSleep', rects: [[0, 0, 14, 3]], density: 0.002, layer: 2, mat: 'metal',
+                   needle: 4, inject: 'sleep' },
+  syringeZombie: { tab: 'syringes', name: 'ゾンビの注射', sprite: 'syringeZombie', rects: [[0, 0, 14, 3]], density: 0.002, layer: 2, mat: 'metal',
+                   needle: 4, inject: 'zombie' },
+  syringeDraw:   { tab: 'syringes', name: 'ちをぬく注射', sprite: 'syringeDraw', rects: [[0, 0, 14, 3]], density: 0.002, layer: 2, mat: 'metal',
+                   needle: 4, inject: 'draw' },
   trampoline: { tab: 'things', name: 'トランポリン', sprite: 'trampoline', rects: [[0, 0, 24, 2], [1, 2, 2, 4, 0.02], [21, 2, 2, 4, 0.02]],
                 density: 0.006, layer: 0, mat: 'rubber', bouncy: true },
   balloon:  { tab: 'things', name: '風船', sprite: 'balloon0', variants: BALLOON_COLORS.map((c, i) => 'balloon' + i), circle: 3.5,
@@ -1889,7 +2183,7 @@ function makeThing(id, x, y, facing = 1) {
                 lit: false, fuse: 0, firing: false, cool: 0, variant, age: 0, string: null };
   body.plugin = { kind: id, owner: ent, mat: T.mat || 'wood',
                   blade: T.blade ? { from: T.blade.from, sharp: T.blade.sharp, facing: f } : null,
-                  needle: T.needle != null ? { from: T.needle, facing: f } : null };
+                  needle: T.needle != null ? { from: T.needle, facing: f, kind: T.inject || 'heal' } : null };
   Composite.add(ent.comp, body);
   Composite.add(world, ent.comp);
   objects.push(ent);
@@ -1923,7 +2217,55 @@ function makeVehicle(id, x, y, facing = 1) {
   return ent;
 }
 
+// 服を着せる（同じ場所の服は、着がえる）
+function wear(g, id) {
+  const C = CLOTHES[id];
+  if (!C) return false;
+  g.wear[C.slot] = id;
+  SND.play('click', 0.7);
+  return true;
+}
+// ヘルメットとよろいを着ていると、その部品へのダメージが半分になる
+function guard(g, part) {
+  let k = 1;
+  for (const id of Object.values(g.wear)) if (CLOTHES[id].guard === part.plugin.kind) k *= 0.5;
+  return k;
+}
+
+// キャラに武器を持たせる：手（前がわの下うで）のさきに、武器のにぎる所をつなぐ。持っている間、武器は持ち主の体とぶつからない。
+// 武器をつかんでドラッグすると、手からはなれる。手がとれたときも、はなれる
+const canEquip = (id) => {
+  const T = THINGS[id];
+  return !!T && !T.vehicle && !T.hidden && (T.tab === 'weapons' || T.tab === 'guns' || !!T.gun || !!T.blade) && !SHOP.locked(id);
+};
+function unequip(g) {
+  const gr = g.grip;
+  if (!gr) return;
+  g.grip = null;
+  gr.ent.gripped = null;
+  Composite.remove(gr.ent.comp, gr.c);
+  gr.ent.body.parts.forEach((q, i) => { q.collisionFilter.group = gr.groups[i]; });
+}
+function equip(g, id) {
+  unequip(g);
+  const hand = g.parts.find((p) => p.plugin.seg === 'armL' && p.plugin.sprite === 'armF');
+  if (!hand || hand.plugin.detached || g.dead || !canEquip(id)) return null;
+  const at = Vector.add(hand.position, Vector.rotate({ x: 0, y: BODY.arm[1] / 2 * PX }, hand.angle));
+  const ent = makeThing(id, at.x, at.y, g.facing);
+  const [gx, gy] = ent.T.grip || [Math.min(3, ent.sprite.width / 2), ent.sprite.height / 2];
+  Body.translate(ent.body, Vector.sub(at, thingPoint(ent, gx, gy)));
+  const c = Constraint.create({ bodyA: hand, pointA: { x: 0, y: BODY.arm[1] / 2 * PX }, bodyB: ent.body,
+                                pointB: Vector.rotate(Vector.sub(at, ent.body.position), -ent.body.angle), length: 0, stiffness: 0.9, damping: 0.1 });
+  const groups = ent.body.parts.map((q) => q.collisionFilter.group);
+  ent.body.parts.forEach((q) => { q.collisionFilter.group = g.group; });
+  Composite.add(ent.comp, c);
+  g.grip = { ent, c, hand, groups };
+  ent.gripped = g;
+  return ent;
+}
+
 function removeThing(ent) {
+  if (ent.gripped) { ent.gripped.grip = null; ent.gripped = null; }
   if (ent.riders) for (const g of ent.riders) if (g) unboard(g);
   cutStrings(ent.bodies);
   releaseGrabsOn(ent.bodies);
@@ -1932,6 +2274,8 @@ function removeThing(ent) {
   if (i >= 0) objects.splice(i, 1);
 }
 function removeChar(g) {
+  unequip(g);
+  closePetMenu();
   unboard(g);
   cutStrings(g.parts);
   releaseGrabsOn(g.parts);
@@ -1988,9 +2332,6 @@ function fire(ent, spread = 0) {
   const a = b.angle + spread;
   const dir = { x: Math.cos(a) * f, y: Math.sin(a) * f };
   const mz = thingPoint(ent, G.muzzle[0], G.muzzle[1]);
-  const hitInfo = raycast(mz, dir, 5000, ent);
-  const end = hitInfo ? hitInfo.point : Vector.add(mz, Vector.mult(dir, 5000));
-  tracers.push({ x1: mz.x, y1: mz.y, x2: end.x, y2: end.y, life: 5 });
   addFx({ x: mz.x + dir.x * PX, y: mz.y + dir.y * PX, vx: 0, vy: 0, g: 0, drag: 1, life: 3, size: PX * 2.5, colors: ['#fffbe0', '#ffd24a'] });
   addFx({ x: b.position.x, y: b.position.y, vx: -dir.x * 2 + rand(-1, 1), vy: rand(-5, -3), g: 0.3, drag: 0.99, life: 40,
           size: PX * 0.6, colors: ['#e0b030', '#b08820'] });   // 薬きょう
@@ -1999,7 +2340,14 @@ function fire(ent, spread = 0) {
   Body.setAngularVelocity(b, Body.getAngularVelocity(b) - f * G.recoil * 0.004);
   SND.play(G.sound, 0.9);
   SHOP.event('shoot');
-  if (hitInfo) bulletHit(hitInfo.body, hitInfo.point, dir, G.power);
+  for (let k = 0; k < (G.pellets || 1); k++) {   // ショットガンは、1回でたくさんの弾がちらばって飛ぶ
+    const pa = a + (G.pellets ? rand(-G.spread, G.spread) : 0);
+    const pd = { x: Math.cos(pa) * f, y: Math.sin(pa) * f };
+    const hitInfo = raycast(mz, pd, 5000, ent);
+    const end = hitInfo ? hitInfo.point : Vector.add(mz, Vector.mult(pd, 5000));
+    tracers.push({ x1: mz.x, y1: mz.y, x2: end.x, y2: end.y, life: 5 });
+    if (hitInfo) bulletHit(hitInfo.body, hitInfo.point, pd, G.power);
+  }
 }
 
 function raycast(start, dir, maxLen, ignore) {
@@ -2174,7 +2522,8 @@ function scorch(x, y, r) {
 function detonate(ent) {
   const p = { x: ent.body.position.x, y: ent.body.position.y };
   removeThing(ent);
-  explode(p.x, p.y, ent.T.bomb.power);
+  if (ent.T.bomb.fire) firebomb(p.x, p.y, ent.T.bomb.power);
+  else explode(p.x, p.y, ent.T.bomb.power);
 }
 
 // 銃の連射・導火線・のりもののエンジン
@@ -2381,7 +2730,7 @@ function sayFor(g, text, x, y) {
 // 速いほど深く刺さって、刀は体をつらぬく。刺さっている物は体のうしろに描くので、体に入っている所は見えない。
 const STICK = 3;   // これより速く刃先から当たると刺さる
 function tryStick(ent, part, speed) {
-  if (ent.stuck || !ent.T.stick || speed < STICK) return false;
+  if (ent.stuck || !ent.T.stick || speed < STICK || CHARS[part.plugin.grape.kind].sparks) return false;   // ロボには刺さらない
   const b = ent.body, f = ent.facing;
   const tip = { x: Math.cos(b.angle) * f, y: Math.sin(b.angle) * f };   // 刃先の向き
   const rel = Vector.sub(Body.getVelocity(b), Body.getVelocity(part));
@@ -2765,13 +3114,18 @@ function charFace(g) {
 }
 function drawChar(g) {
   const face = charFace(g);
+  const worn = Object.values(g.wear).flatMap((id) => CLOTHES[id].layers);
   for (const p of g.parts) {
     const pl = p.plugin;
     const level = Math.min(4, Math.round(pl.hurt * 4));
     const burn = Math.min(3, Math.round(pl.burn * 3));
     const name = pl.kind === 'head' ? 'head_' + face : pl.sprite;
-    const [ax, ay] = ANCHOR[pl.kind === 'head' ? 'head' : pl.sprite];
+    const key = pl.kind === 'head' ? 'head' : pl.sprite;
+    const [ax, ay] = ANCHOR[key];
+    const layers = worn.filter((L) => L.key === key && (!L.seg || L.seg === pl.seg));
+    for (const L of layers) if (L.under) drawSprite(p, L.img, ax - L.ox, ay - L.oy, g.facing);
     drawSprite(p, getSprite(g.kind, name, level, burn), ax, ay, g.facing);
+    for (const L of layers) if (!L.under) drawSprite(p, L.img, ax - L.ox, ay - L.oy, g.facing);
   }
 }
 function drawThing(ent) {
@@ -2975,7 +3329,6 @@ function frame(t) {
   updateZoomAnim();
   updateKeys(dt);
   updateFollow();
-  updateRotating(dt);
   if (!paused && !rotateShown) {
     acc += dt;
     let n = 0;
@@ -2989,7 +3342,6 @@ function frame(t) {
 // ---- さわって動かす ----
 // 物やキャラの上をさわると、つかんで動かせる（すばやくはなすと投げられる）。つかまずにタップすると、銃は撃つ・爆弾は火がつく・
 // のりものはエンジンがかかる。何もない所をドラッグすると画面が動く。2本指でひろげる・ちぢめるとアップ・ルーズ。
-// つかんだ物をゴミ箱まで持っていってはなすと消える。
 const pointers = new Map();   // さわっている指（マウス）ごとの情報
 let camGesture = null;        // 画面を動かしているとき：指の下にある世界の点と、2本指のあいだの長さ
 
@@ -3038,22 +3390,18 @@ function dropGrab(p) {
 }
 function releaseGrabsOn(bodies) {
   for (const p of pointers.values()) if (p.grab && bodies.includes(p.grab.bodyB)) dropGrab(p);
-  updateTrash();
 }
 function releaseAllPointers() {
   for (const p of pointers.values()) dropGrab(p);
   pointers.clear();
   camGesture = null;
-  updateTrash();
 }
-// 持っている物（キャラ以外）は、かたむきをそのまま保つ（ナイフの刃先を向けたまま刺せる）。
-// 回すボタン・ホイール・Q と E のキーで回せる
+// 持っている物（キャラ以外）は、指でつかんだ所からぶら下がって、重力で下を向く。2本の指でつかむと、向きを決められる
 function heldThings() { return [...pointers.values()].filter((p) => p.grab && p.grab.bodyB.plugin && p.grab.bodyB.plugin.owner); }
 function updateHeld() {
-  for (const p of heldThings()) {
+  for (const p of heldThings()) {   // ぶらぶらゆれつづけないように、回る勢いを少しずつ弱める
     const b = p.grab.bodyB;
-    if (p.angle == null) p.angle = b.angle;
-    Body.setAngularVelocity(b, Body.getAngularVelocity(b) * 0.3 + wrapAngle(p.angle - b.angle) * 0.25);
+    Body.setAngularVelocity(b, Body.getAngularVelocity(b) * 0.85);
   }
   // 持っている物が速すぎると、うすい物をすりぬけてしまうので、速さに上限をつける
   for (const p of pointers.values()) {
@@ -3061,14 +3409,6 @@ function updateHeld() {
     const b = p.grab.bodyB, v = Body.getVelocity(b), sp = Math.hypot(v.x, v.y), max = b.plugin.grape ? 26 : 22;
     if (sp > max) Body.setVelocity(b, { x: v.x * max / sp, y: v.y * max / sp });
   }
-}
-function rotateHeld(da) {
-  for (const p of heldThings()) p.angle = (p.angle == null ? p.grab.bodyB.angle : p.angle) + da;
-}
-let rotDir = 0, rotKey = 0;   // 回すボタンを押している向き、Q/E キーの向き
-function updateRotating(dt) {
-  const d = rotDir || rotKey;
-  if (d) rotateHeld(d * 0.05 * dt / STEP);
 }
 
 // 画面が動いたら、つかんでいる点を指の下にもどす
@@ -3109,32 +3449,42 @@ function applyCamGesture() {
   syncGrabs();
 }
 
+let lastTap = null;   // 1回目のタップ（ダブルタップの見きわめ）
 function onPointerDown(e) {
   if (view !== 'play' || rotateShown) return;
   e.preventDefault();
-  closeDrawer();
   try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* もうはなれた指 */ }
   const p = { id: e.pointerId, sx: e.clientX, sy: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now(),
               moved: false, grab: null };
   pointers.set(e.pointerId, p);
   const pt = screenToWorld(e.clientX, e.clientY);
-  const b = pickAt(pt, (e.pointerType === 'mouse' ? 6 : 16) / cam.z);
+  let b = pickAt(pt, (e.pointerType === 'mouse' ? 6 : 16) / cam.z);
+  if (!b) {   // 持っている物の近くに2本目の指を置いたら、同じ物をもう1か所でつかむ（向きを決められる）
+    const near = 60 / cam.z;
+    for (const h of heldThings()) {
+      const bb = h.grab.bodyB.bounds;
+      if (pt.x > bb.min.x - near && pt.x < bb.max.x + near && pt.y > bb.min.y - near && pt.y < bb.max.y + near) { b = h.grab.bodyB; break; }
+    }
+  }
   if (b) grab(p, b, pt);
+  closePetMenu();
   resetCamGesture();
-  updateTrash();
 }
 function onPointerMove(e) {
   const p = pointers.get(e.pointerId);
   if (!p) return;
   p.sx = e.clientX;
   p.sy = e.clientY;
-  if (!p.moved && Math.hypot(p.sx - p.x0, p.sy - p.y0) > 8) p.moved = true;
+  if (!p.moved && Math.hypot(p.sx - p.x0, p.sy - p.y0) > 8) {
+    p.moved = true;
+    const held = p.grab && p.grab.bodyB.plugin.owner;
+    if (held && held.gripped) unequip(held.gripped);
+  }
   if (p.grab) {
     const w = screenToWorld(p.sx, p.sy);
     p.grab.pointA.x = w.x;
     p.grab.pointA.y = w.y;
-    updateTrash();
-  } else applyCamGesture();
+    } else applyCamGesture();
 }
 function onPointerUp(e) {
   const p = pointers.get(e.pointerId);
@@ -3143,14 +3493,15 @@ function onPointerUp(e) {
   if (p.grab) {
     const b = p.grab.bodyB;
     const tap = !p.moved && performance.now() - p.t0 < 350;
-    const trash = e.type === 'pointerup' && overTrash(e.clientX, e.clientY);
     dropGrab(p);
-    if (trash) removeBody(b);
-    else if (tap && b.plugin.owner) activate(b.plugin.owner, screenToWorld(e.clientX, e.clientY));
-    else if (b.plugin.grape) tryBoard(b.plugin.grape);
+    if (tap && b.plugin.owner) activate(b.plugin.owner, screenToWorld(e.clientX, e.clientY));
+    else if (b.plugin.grape) {
+      const g = b.plugin.grape, now = performance.now();
+      if (tap && lastTap && lastTap.g === g && now - lastTap.t < 450) { lastTap = null; openPetMenu(g, e.clientX, e.clientY); }
+      else { lastTap = tap ? { g, t: now } : null; tryBoard(g); }
+    }
   }
   resetCamGesture();
-  updateTrash();
 }
 canvas.addEventListener('pointerdown', onPointerDown);
 canvas.addEventListener('pointermove', onPointerMove);
@@ -3158,12 +3509,11 @@ canvas.addEventListener('pointerup', onPointerUp);
 canvas.addEventListener('pointercancel', onPointerUp);
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-// マウスのホイール・トラックパッドの2本指でアップ・ルーズ（トラックパッドで横にすべらせると横に動く）。物を持っているときは回す
+// マウスのホイール・トラックパッドの2本指でアップ・ルーズ（トラックパッドで横にすべらせると横に動く）
 canvas.addEventListener('wheel', (e) => {
   if (view !== 'play') return;
   e.preventDefault();
   const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1;
-  if (heldThings().length) { rotateHeld(e.deltaY * unit * 0.004); return; }   // 物を持っているときは、ホイールで回す
   zoomTarget = 0;
   zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * unit * (e.ctrlKey ? 0.01 : 0.0015)));
   if (e.deltaX && !e.ctrlKey) {
@@ -3174,17 +3524,16 @@ canvas.addEventListener('wheel', (e) => {
   }
 }, { passive: false });
 
-// キーボード：＋ − でアップ・ルーズ、矢印キーで画面を動かす、物を持っているときは Q と E で回す
+// キーボード：＋ − でアップ・ルーズ、矢印キーで画面を動かす
 const keys = new Set();
 window.addEventListener('keydown', (e) => {
   if (view !== 'play') return;
   if (e.key === '+' || e.key === '=' || e.key === ';') zoomSmooth(1.25);
   else if (e.key === '-' || e.key === '_') zoomSmooth(0.8);
   else if (e.key.startsWith('Arrow')) { keys.add(e.key); e.preventDefault(); }
-  else if (e.key === 'q' || e.key === 'e') rotKey = e.key === 'q' ? -1 : 1;
 });
-window.addEventListener('keyup', (e) => { keys.delete(e.key); if (e.key === 'q' || e.key === 'e') rotKey = 0; });
-window.addEventListener('blur', () => { keys.clear(); rotKey = 0; });
+window.addEventListener('keyup', (e) => { keys.delete(e.key); });
+window.addEventListener('blur', () => { keys.clear(); });
 function updateKeys(dt) {
   if (!keys.size) return;
   const s = dt * 0.9 / cam.z;
@@ -3197,57 +3546,204 @@ function updateKeys(dt) {
   syncGrabs();
 }
 
-// ゴミ箱（何かをつかんでいる間だけ出てくる）
-const trashEl = byId('trash');
-function overTrash(x, y) {
-  const r = trashEl.getBoundingClientRect();
-  return !trashEl.classList.contains('hidden') && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+// ---- あそびかた（いつでも ❓ で見られる） ----
+// [絵文字, 見出し, 説明]。文字は tr() を通すので、英語は lang.js に書く
+const TUTORIAL = [
+  ['🍇', 'ようこそ！', 'グレープたちで あそぶ、ぶつりシミュレーターだよ。つかんだり、なげたり、ぶきや ばくだんで、いろいろ ためしてみよう。'],
+  ['➕', 'キャラやアイテムを出す', '左上の ＋ を押すと、ひきだしが開くよ。上のタブ（キャラ・ぶき・じゅう…）は、横にすべらせて えらぼう。出したいものを右にスワイプすると、はなした所に出るよ。タップすると、あいている所に出るよ。ひきだしは ✕ で閉じるよ。'],
+  ['✋', 'つかむ・なげる', 'キャラやものをさわって、ドラッグ。すばやくはなすと、なげられるよ。持った物は、下を向いてぶら下がるよ。2本の指で持つと、向きを決められるよ。'],
+  ['👆', 'タップして つかう', '出した物を、タップしてみよう。じゅうは うつ、ばくだんは 火がつく、チェーンソーは 動く、ふうせんは われるよ。のりものは、タップで 走る・止まる。'],
+  ['👆👆', 'ダブルタップ', 'キャラをすばやく2回タップすると、小さいメニューが出るよ。ころす、生き返らせる、もやす、ぶきをもたせる が えらべるよ。ぶきを、キャラの上ではなしても、そのキャラが持つよ。'],
+  ['🚗', 'のりもの', 'キャラをつかんで、のりものの席の近くではなすと、乗るよ。のりものを タップすると、走りだすよ。乗っている人を つかんで引っぱると、おりるよ。'],
+  ['💉', 'ちゅうしゃ', '「ちゅうしゃ」タブの針を、キャラに さしてみよう。みどりは 治す（頭があれば、死んでいても生き返る）、むらさきは どく、青は ねむる、こい緑は ゾンビになる、赤は ちが ぬけるよ。'],
+  ['🔍', '画面を動かす', '何もない所を ドラッグすると、画面が動くよ。2本の指（マウスなら ホイール）で、アップ・ルーズ。右下の ルーズ・アップ ボタンでも できるよ。'],
+  ['🧹', 'そうじ', '右上の 🧹 か「そうじ」タブで、ぜんぶ・いきもの・しかばね・もの・よごれを、べつべつに消せるよ。'],
+  ['🪙', 'コイン・クエスト・ショップ', 'キャラをたおしたり、クエストをクリアしたりすると、コインがもらえるよ。ホームの ショップで、新しいものが買えるよ。モッドでは、自分のキャラやものが作れるよ。'],
+  ['❓', 'ほかのボタン', '右上：スロー、一時停止、そうじ、全画面、マップえらび、あそびかた。この説明は、いつでも ❓ で見られるよ。'],
+];
+const tutEl = byId('tutorial');
+let tutPage = 0, tutWasPaused = false;
+function renderTutorial() {
+  const [icon, title, text] = TUTORIAL[tutPage];
+  byId('tutIcon').textContent = icon;
+  byId('tutTitle').textContent = tr(title);
+  byId('tutText').textContent = tr(text);
+  const dots = byId('tutDots');
+  dots.textContent = '';
+  TUTORIAL.forEach((_, i) => {
+    const d = document.createElement('span');
+    d.className = i === tutPage ? 'on' : '';
+    d.addEventListener('click', () => { tutPage = i; renderTutorial(); });
+    dots.append(d);
+  });
+  byId('tutPrev').disabled = tutPage === 0;
+  byId('tutNext').textContent = tr(tutPage === TUTORIAL.length - 1 ? '閉じる' : '次へ ▶');
 }
-function updateTrash() {
-  const held = [...pointers.values()].filter((p) => p.grab);
-  trashEl.classList.toggle('hidden', !held.length);
-  trashEl.classList.toggle('hot', held.some((p) => overTrash(p.sx, p.sy)));
-  const things = heldThings().length > 0;
-  byId('rotBtns').classList.toggle('hidden', !things);
-  if (!things) rotDir = 0;
+function openTutorial() {
+  if (!tutEl.classList.contains('hidden')) return;
+  tutPage = 0;
+  if (view === 'play') { tutWasPaused = paused; paused = true; releaseAllPointers(); closePetMenu(); }
+  renderTutorial();
+  tutEl.classList.remove('hidden');
 }
-// 回すボタン：押している間、持っている物が回る（もう1本の指で押す）
-for (const [id, d] of [['btnRotL', -1], ['btnRotR', 1]]) {
-  const b = byId(id);
-  b.addEventListener('pointerdown', (e) => { e.preventDefault(); rotDir = d; });
-  for (const t of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(t, () => { if (rotDir === d) rotDir = 0; });
+function closeTutorial() {
+  if (tutEl.classList.contains('hidden')) return;
+  tutEl.classList.add('hidden');
+  if (view === 'play') paused = tutWasPaused;
 }
-function removeBody(b) {
-  const g = b.plugin && b.plugin.grape;
-  if (g) { removeChar(g); SND.play('pop', 0.8); return; }
-  const ent = b.plugin && b.plugin.owner;
-  if (ent) { removeThing(ent); SND.play('pop', 0.8); }
+byId('tutClose').addEventListener('click', closeTutorial);
+byId('tutPrev').addEventListener('click', () => { if (tutPage > 0) { tutPage--; renderTutorial(); } });
+byId('tutNext').addEventListener('click', () => { if (tutPage < TUTORIAL.length - 1) { tutPage++; renderTutorial(); } else closeTutorial(); });
+byId('btnHelp').addEventListener('click', openTutorial);
+byId('btnHelpPlay').addEventListener('click', openTutorial);
+window.addEventListener('keydown', (e) => {   // 説明が開いているあいだは、ゲームのキーは効かない
+  if (tutEl.classList.contains('hidden')) return;
+  e.stopImmediatePropagation();
+  if (e.key === 'Escape') closeTutorial();
+  else if (e.key === 'ArrowRight') byId('tutNext').click();
+  else if (e.key === 'ArrowLeft') byId('tutPrev').click();
+}, true);
+
+// ---- ニュース（news.js）。まだ見ていないニュースがあれば、ゲームを開いたときに自動で開く ----
+const NEWS = window.GrapeNews || [];
+const newsEl = byId('news');
+const newsUnseen = () => NEWS.length > 0 && settings.newsSeen !== NEWS[0].id;
+function updateNewsBadge() { byId('newsBadge').classList.toggle('hidden', !newsUnseen()); }
+function renderNews() {
+  const list = byId('newsList');
+  list.textContent = '';
+  const seen = NEWS.findIndex((n) => n.id === settings.newsSeen);
+  const fresh = seen < 0 ? NEWS.length : seen;   // これより前（新しいほう）のニュースは、まだ見ていない
+  NEWS.forEach((n, i) => {
+    const sec = document.createElement('section');
+    sec.className = 'newsItem';
+    const head = document.createElement('div');
+    head.className = 'newsHead';
+    head.textContent = tr('バージョン') + ' ' + n.id + ' · ' + n.date;
+    if (i < fresh) {
+      const tag = document.createElement('span');
+      tag.className = 'newsNew';
+      tag.textContent = 'NEW';
+      head.append(tag);
+    }
+    const title = document.createElement('div');
+    title.className = 'newsTitle';
+    title.textContent = tr(n.title);
+    const ul = document.createElement('ul');
+    for (const t of n.items) {
+      const li = document.createElement('li');
+      li.textContent = tr(t);
+      ul.append(li);
+    }
+    sec.append(head, title, ul);
+    list.append(sec);
+  });
+  list.scrollTop = 0;
+}
+function openNews() {
+  renderNews();
+  newsEl.classList.remove('hidden');
+}
+function closeNews() {
+  if (newsEl.classList.contains('hidden')) return;
+  newsEl.classList.add('hidden');
+  if (NEWS.length) { settings.newsSeen = NEWS[0].id; saveSettings(); }
+  updateNewsBadge();
+}
+function checkNews() { if (newsUnseen()) openNews(); }
+byId('btnNews').addEventListener('click', openNews);
+byId('newsClose').addEventListener('click', closeNews);
+byId('newsOk').addEventListener('click', closeNews);
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeNews(); });
+
+// ---- ダブルタップで出る小さいメニュー（ころす・生き返らせる・もやす） ----
+const petMenu = byId('petMenu');
+let petPos = { x: 0, y: 0 };
+function closePetMenu() { petMenu.classList.add('hidden'); petMenu.textContent = ''; }
+function placePetMenu() {
+  const r = petMenu.getBoundingClientRect();
+  petMenu.style.left = clamp(petPos.x - r.width / 2, 6, W - r.width - 6) + 'px';
+  petMenu.style.top = clamp(petPos.y - r.height - 30, 6, H - r.height - 6) + 'px';
+}
+function openPetMenu(g, sx, sy) {
+  petPos = { x: sx, y: sy };
+  const add = (label, act, fn, keep) => {
+    const b = document.createElement('button');
+    b.textContent = tr(label);
+    b.dataset.act = act;
+    b.addEventListener('click', () => { if (!keep) closePetMenu(); fn(); });
+    petMenu.append(b);
+    return b;
+  };
+  const at = () => ({ x: g.head.position.x, y: g.head.position.y });
+  const main = () => {
+    petMenu.textContent = '';
+    petMenu.classList.remove('give');
+    if (!g.dead) add('💀 ころす', 'kill', () => { g.stun = 0; kill(g, 'menu'); });
+    else add('❤ 生き返らせる', 'revive', () => { g.healCool = 0; heal(g, at()); });
+    add('🔥 もやす', 'burn', () => ignite(g));
+    if (!g.dead) add('⚔ ぶきをもたせる', 'give', give, true);
+    add('👕 ふくをきせる', 'dress', dress, true);
+    if (Object.keys(g.wear).length) add('👕 ふくをぬぐ', 'undress', () => { g.wear = {}; });
+    if (g.grip) add('✋ ぶきをすてる', 'drop', () => unequip(g));
+    petMenu.classList.remove('hidden');
+    placePetMenu();
+  };
+  const give = () => {
+    petMenu.textContent = '';
+    petMenu.classList.add('give');
+    add('← もどる', 'back', main, true);
+    for (const it of ITEMS) {
+      if (!canEquip(it.id)) continue;
+      const b = add(nameOf(it.id), 'item', () => equip(g, it.id));
+      b.textContent = nameOf(it.id);
+      b.dataset.give = it.id;
+    }
+    placePetMenu();
+  };
+  const dress = () => {
+    petMenu.textContent = '';
+    petMenu.classList.add('give');
+    add('← もどる', 'back', main, true);
+    for (const id of Object.keys(CLOTHES)) {
+      const b = add(nameOf(id), 'item', () => wear(g, id));
+      b.textContent = nameOf(id);
+      b.dataset.wear = id;
+    }
+    placePetMenu();
+  };
+  main();
 }
 
 // ---- アイテムのひきだし ----
 const TABS = [
-  { id: 'chars', name: 'キャラ', hint: 'スワイプして画面に出す。タップすると空いている所に出る。' },
-  { id: 'weapons', name: 'ぶき', hint: '刃のほうが当たると切れる。刃先からまっすぐ刺すと、刺さる（引っぱると抜ける）。' },
-  { id: 'guns', name: 'じゅう', hint: '出した銃をタップすると撃つ。マシンガンはもう一度タップすると止まる。' },
-  { id: 'bombs', name: 'ばくだん', hint: '出した爆弾をタップすると火がつく。ばくはつ樽は強くぶつけても爆発する。' },
+  { id: 'chars', name: 'キャラ', hint: 'スワイプして画面に出す。タップすると空いている所に出る。ぶきをキャラの上ではなすと、そのキャラが持つ。' },
+  { id: 'weapons', name: 'ぶき', hint: '刃のほうが当たると切れる。刃先からまっすぐ刺すと、刺さる（引っぱると抜ける）。持った物は下を向くので、2本の指で持って向きを決める。' },
+  { id: 'guns', name: 'じゅう', hint: '出した銃をタップすると撃つ。マシンガンはもう一度タップすると止まる。ショットガンは、たくさんの弾が広がって飛ぶ。' },
+  { id: 'bombs', name: 'ばくだん', hint: '出した爆弾をタップすると火がつく。ばくはつ樽は強くぶつけても爆発する。火炎びんは、割れると、まわりのキャラに火がつく。' },
   { id: 'vehicles', name: 'のりもの', hint: 'キャラをつかんで座席の近くではなすと乗る。のりものをタップすると走る・止まる。戦車は砲台をタップすると撃つ。' },
-  { id: 'things', name: 'もの', hint: '回復の注射の針を刺すとケガが治る。頭がついていれば、死んでいても生き返る。風船は、つかんでさわらせると、ひもでつながる。' },
+  { id: 'things', name: 'もの', hint: '風船は、つかんでさわらせると、ひもでつながる。持った物は、下を向いてぶら下がる。2本の指で持つと、向きを決められる。' },
+  { id: 'syringes', name: 'ちゅうしゃ', hint: '針を刺すと、いろいろなことが起きる。緑は治す、むらさきはどく、青はねむらせる、黒ずんだ緑はゾンビにする、赤はちをぬく。' },
+  { id: 'clothes', name: 'ふく', hint: 'ふくを、キャラの上にスワイプして、はなすと着る。ダブルタップのメニューからも着せられる。ヘルメットとよろいは、ダメージが半分になる。' },
+  { id: 'clean', name: 'そうじ', hint: 'ボタンを押すと、消える。' },
   { id: 'mods', name: 'モッド', hint: 'モッドエディターで作ったキャラや物。「＋ 作る」で新しく作れる。' },
 ];
 // ひきだしに出すもの。🔒 のついたものは、ショップで買うと使える
 let ITEMS = [];
 function buildItems() {
   ITEMS = Object.keys(CHARS).filter((id) => !CHARS[id].hidden).map((id) => ({ id, tab: CHARS[id].mod ? 'mods' : 'chars' }))
-    .concat(Object.entries(THINGS).filter(([, T]) => !T.hidden).map(([id, T]) => ({ id, tab: T.tab })));
+    .concat(Object.entries(THINGS).filter(([, T]) => !T.hidden).map(([id, T]) => ({ id, tab: T.tab })))
+    .concat(Object.keys(CLOTHES).map((id) => ({ id, tab: 'clothes' })));
 }
 buildItems();
 // キャラや物の名前（モッドの名前は、作った人がつけた名前のまま）
-const nameOf = (id) => { const d = CHARS[id] || THINGS[id]; return !d ? id : d.mod ? d.name : tr(d.name); };
+const nameOf = (id) => { const d = CHARS[id] || THINGS[id] || CLOTHES[id]; return !d ? id : d.mod ? d.name : tr(d.name); };
 const iconCache = new Map();
 function itemIcon(id) {
   let c = iconCache.get(id);
   if (c) return c;
   if (CHARS[id]) c = FIGURES[id];
+  else if (CLOTHES[id]) c = clothIcon(id);
   else if (THINGS[id].crate) c = crateSprite(10);
   else if (THINGS[id].vehicle) {   // のりものは、タイヤもつけた絵
     const V = VEHICLES[THINGS[id].vehicle], s = OBJ_SPRITES[V.sprite], w = OBJ_SPRITES[V.wheel];
@@ -3277,6 +3773,21 @@ function renderDrawer() {
   }
   const itemsEl = byId('items');
   itemsEl.textContent = '';
+  if (tab === 'clean') {
+    for (const [icon, label, fn] of CLEANERS) {
+      const el = document.createElement('button');
+      el.className = 'item make';
+      el.dataset.clean = label;
+      el.textContent = icon;
+      const span = document.createElement('span');
+      span.textContent = tr(label);
+      el.append(span);
+      el.addEventListener('click', () => { fn(); SND.play('pop', 0.8); });
+      itemsEl.append(el);
+    }
+    byId('drawerHint').textContent = tr(TABS.find((tb) => tb.id === tab).hint);
+    return;
+  }
   for (const it of ITEMS.filter((i) => i.tab === tab)) {
     const locked = SHOP.locked(it.id);
     const el = document.createElement('div');
@@ -3328,7 +3839,7 @@ function onItemDown(e) {
   e.preventDefault();
   e.currentTarget.setPointerCapture(e.pointerId);
   const facing = settings.facing || (Math.random() < 0.5 ? 1 : -1);
-  drag = { it, id: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false, out: false, facing };
+  drag = { it, id: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false, facing };
   const icon = itemIcon(it.id);
   ghost.width = icon.width; ghost.height = icon.height;
   const gx = ghost.getContext('2d');
@@ -3349,19 +3860,15 @@ function onItemMove(e) {
   }
   if (!drag.moved) return;
   placeGhost(e.clientX, e.clientY);
-  if (!drag.out && e.clientX > drawer.getBoundingClientRect().right) {
-    drag.out = true;
-    closeDrawer();
-  }
 }
 function onItemUp(e) {
   if (!drag || e.pointerId !== drag.id) return;
   const d = drag;
   drag = null;
   ghost.classList.add('hidden');
-  if (d.out) spawnItem(d.it.id, e.clientX, e.clientY, d.facing);
-  else if (!d.moved) { spawnItem(d.it.id, null, null, d.facing); closeDrawer(); }
-  // ひきだしの中ではなしたら、なにもしない
+  if (d.moved && e.clientX > drawer.getBoundingClientRect().right) spawnItem(d.it.id, e.clientX, e.clientY, d.facing);
+  else if (!d.moved) spawnItem(d.it.id, null, null, d.facing);
+  // ひきだしの中ではなしたら、なにもしない。ひきだしは、✕ か ＋ で閉じるまで開いたまま
 }
 function onItemCancel() { drag = null; ghost.classList.add('hidden'); }
 
@@ -3399,13 +3906,41 @@ function spawnItem(id, sx, sy, facing) {
     const stand = surfaceAt(x, hy) - FOOT_BELOW_HEAD * PX - 1;       // 足が地面にとどく高さ
     return makeChar(id, x, Math.max(tap ? stand : Math.min(hy, stand), -worldH), { facing, guard: 90 });
   }
+  if (CLOTHES[id]) {   // 服は、キャラの上ではなしたときだけ着る
+    const b = tap ? null : pickAt(p, 12 / cam.z), g = b && b.plugin.grape;
+    if (g) wear(g, id);
+    else say('キャラの上ではなしてね', tap ? cam.x + W / cam.z / 2 : p.x, tap ? cam.y + H / cam.z / 2 : p.y - 40, '#ffffff', true);
+    return null;
+  }
+  if (!tap && canEquip(id)) {   // キャラの上ではなすと、そのキャラが持つ
+    const b = pickAt(p, 12 / cam.z), g = b && b.plugin.grape;
+    if (g && !g.dead) { const ent = equip(g, id); if (ent) return ent; }
+  }
   const x = clamp(tap ? freeSpotX() : p.x, worldX0 + 12 * PX, worldX1 - 12 * PX);
   const want = tap ? cam.y + H / cam.z * 0.3 : p.y;
   const rest = surfaceAt(x, tap ? top : want) - bottomOf(id) * PX - 1;   // 地面に置いたときの高さ
   return makeThing(id, x, tap && THINGS[id].vehicle ? rest : Math.min(want, rest), facing);
 }
 
+// そうじのタブのボタン。ぜんぶ、生きもの・しかばね・物・よごれ（血やこげあと）の一部だけを消せる
+function clearLiving() { for (const g of chars.slice()) if (!g.dead) removeChar(g); }
+function clearCorpses() { for (const g of chars.slice()) if (g.dead) removeChar(g); }
+function clearThings() { for (const o of objects.slice()) removeThing(o); SND.engine(0); }
+function clearDecals() {
+  Composite.remove(world, bloods);
+  bloods.length = 0;
+  sctx.clearRect(0, 0, stain.width, stain.height);
+  for (const ch of chunks.values()) if (ch.sctx) ch.sctx.clearRect(0, 0, CHUNK, currentMap.h);
+}
+const CLEANERS = [
+  ['🧹', 'ぜんぶ消す', () => clearAll()],
+  ['🧍', 'いきものを消す', clearLiving],
+  ['💀', 'しかばねを消す', clearCorpses],
+  ['📦', 'ものを消す', clearThings],
+  ['🩸', 'よごれを消す', clearDecals],
+];
 function clearAll() {
+  closePetMenu();
   releaseAllPointers();
   follow = null;
   for (const g of chars) Composite.remove(world, g.comp, true);
@@ -3435,6 +3970,8 @@ function showView(name, opts = {}) {
   for (const id of ['btnItems', 'stats', 'hudRight', 'zoomBtns']) byId(id).classList.toggle('hidden', name !== 'play');
   byId('btnFull').classList.toggle('hidden', !document.fullscreenEnabled);
   if (name !== 'play') {
+    closeTutorial();
+    closePetMenu();
     closeDrawer();
     releaseAllPointers();
     SND.engine(0);
@@ -3500,7 +4037,8 @@ function startMap(m) {
   byId('btnPause').textContent = '⏸';
   showView('play');
   makeChar('grape', sx, ground - FOOT_BELOW_HEAD * PX - 1, { facing: 1, guard: 30 });   // 最初の一体は地面に立っている
-  if (!hintShown) { hintShown = true; showHint(); }
+  if (!settings.tutorialSeen && !navigator.webdriver) { settings.tutorialSeen = 1; saveSettings(); openTutorial(); hintShown = true; }   // はじめてのときだけ、自動で開く
+  else if (!hintShown) { hintShown = true; showHint(); }
 }
 
 // 画面の大きさが変わったとき（スマホを回したときなど）。見ていた所をまん中にしたまま、キャラの見える大きさをそろえる
@@ -3532,7 +4070,7 @@ byId('btnItems').addEventListener('click', () => (drawer.classList.contains('ope
 byId('btnDrawerClose').addEventListener('click', closeDrawer);
 byId('btnSlow').addEventListener('click', (e) => { slow = !slow; e.currentTarget.classList.toggle('on', slow); });
 byId('btnPause').addEventListener('click', (e) => { paused = !paused; e.currentTarget.textContent = paused ? '▶' : '⏸'; });
-byId('btnClear').addEventListener('click', clearAll);
+byId('btnClear').addEventListener('click', () => { tab = 'clean'; renderDrawer(); openDrawer(); });
 byId('btnFull').addEventListener('click', () => (document.fullscreenElement ? document.exitFullscreen().catch(() => {}) : goLandscape()));
 byId('btnUp').addEventListener('click', () => zoomSmooth(1.5));
 byId('btnLoose').addEventListener('click', () => zoomSmooth(1 / 1.5));
@@ -3716,7 +4254,19 @@ window.GRAPE = {
   seatPoint: (oi, seat = 0) => seatPoint(objects[oi], seat),
   removeObject: (i) => removeThing(objects[i]),
   explode: (x, y, power) => explode(x, y, power),
-  clearAll,
+  clearAll, clearLiving, clearCorpses, clearThings, clearDecals,
+  petMenu: (i) => { const g = chars[i]; const s = worldToScreen(g.torso.position.x, g.torso.position.y); openPetMenu(g, s.x, s.y); },
+  ignite: (i) => ignite(chars[i]),
+  news: () => ({ open: !newsEl.classList.contains('hidden'), badge: !byId('newsBadge').classList.contains('hidden'), seen: settings.newsSeen,
+                 entries: byId('newsList').querySelectorAll('.newsItem').length, fresh: byId('newsList').querySelectorAll('.newsNew').length }),
+  checkNews,
+  wear: (i, id) => wear(chars[i], id),
+  worn: (i) => ({ ...chars[i].wear }),
+  tutorial: () => ({ open: !tutEl.classList.contains('hidden'), page: tutPage, pages: TUTORIAL.length }),
+  equip: (i, id) => { const e = equip(chars[i], id); return e ? objects.indexOf(e) : -1; },
+  unequip: (i) => unequip(chars[i]),
+  gripOf: (i) => { const gr = chars[i].grip; return gr ? { obj: objects.indexOf(gr.ent), handX: Math.round(gr.hand.position.x), handY: Math.round(gr.hand.position.y) } : null; },
+  inject: (i, kind) => inject(chars[i], chars[i].head.position, kind),
   startMap: (i) => startMap(typeof i === 'string' ? MAPS.find((m) => m.id === i) : MAPS[i]),
   maps: () => MAPS.map((m) => ({ id: m.id, name: m.name, w: m.w * PX, h: m.h * PX, start: m.start * PX })),
   view: () => view,
@@ -3774,6 +4324,10 @@ if (!isTouch && innerHeight > innerWidth) {
 measure();
 syncMods();
 renderDrawer();
+// ニュースの前は、まだ何も見ていない人（はじめて遊ぶ人）なら、最新まで見たことにする。前のバージョンから遊んでいる人は、0.8 まで見たことにする
+if (!settings.newsSeen && NEWS.length) { settings.newsSeen = window.__returning ? '0.8' : NEWS[0].id; saveSettings(); }
 showView('home');
+updateNewsBadge();
+if (!navigator.webdriver) checkNews();
 requestAnimationFrame(frame);
 })();

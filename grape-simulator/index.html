@@ -32,12 +32,46 @@
   #hudRight { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; }
   #zoomBtns { position: fixed; right: 10px; bottom: 14px; display: flex; gap: 8px; }
   #zoomBtns .hudbtn { width: auto; padding: 0 14px; font-size: 18px; font-weight: bold; }
-  #trash { position: fixed; left: 50%; bottom: 14px; width: 76px; height: 76px; margin-left: -38px; z-index: 4;
-           display: flex; align-items: center; justify-content: center; font-size: 40px; pointer-events: none;
-           background: rgba(0,0,0,.45); border: 3px dashed #fff; border-radius: 50%; box-sizing: border-box; }
-  #trash.hot { background: #d23a2a; border-style: solid; transform: scale(1.15); }
-  #rotBtns { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; gap: 104px; z-index: 4; }
-  #rotBtns .hudbtn { width: 56px; height: 56px; font-size: 30px; font-weight: bold; }
+  /* あそびかた */
+  #tutorial { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .65); }
+  .tutBox { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(92vw, 560px);
+            max-height: calc(100% - 20px); overflow: auto; padding: 18px 22px 16px; box-sizing: border-box; background: #fff; color: #222;
+            border: 4px solid #000; border-radius: 14px; text-align: center; }
+  #news { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .65); }
+  .newsBox { align-items: stretch; text-align: left; }
+  .newsBox h2 { margin: 0; text-align: center; font-size: 22px; color: #222; text-shadow: none; }
+  #newsList { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; min-height: 0; }
+  .newsItem { border-top: 2px solid #ddd; padding: 8px 0 4px; }
+  .newsHead { font-size: 13px; color: #666; }
+  .newsTitle { font-size: 17px; font-weight: bold; margin: 2px 0 0; }
+  .newsItem ul { margin: 6px 0 0; padding-left: 22px; font-size: 15px; line-height: 1.6; }
+  .newsNew, #newsBadge { background: #d23a2a; color: #fff; border-radius: 8px; padding: 1px 7px; font-size: 12px; margin-left: 6px; vertical-align: middle; }
+  #newsClose, #tutClose { position: absolute; top: 8px; right: 8px; width: 38px; height: 38px; font-size: 18px; }
+  #tutIcon { font-size: 48px; line-height: 1.1; }
+  #tutTitle { margin: 0; font-size: 22px; text-shadow: none; color: #222; }
+  #tutText { margin: 0; font-size: 17px; line-height: 1.7; min-height: 7.5em; text-shadow: none; }
+  #tutDots { display: flex; gap: 8px; }
+  #tutDots span { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #000; background: #ddd; cursor: pointer; }
+  #tutDots span.on { background: #6ccf5f; }
+  .tutNav { display: flex; gap: 12px; justify-content: center; }
+  .tutNav button { padding: 8px 18px; font-size: 17px; font-weight: bold; border: 3px solid #000; border-radius: 10px; background: #6ccf5f;
+                   color: #10301a; cursor: pointer; box-shadow: 0 3px 0 #000; font-family: inherit; text-shadow: none; }
+  .tutNav button:disabled { background: #ddd; color: #888; cursor: default; }
+  .tutNav button:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+  @media (max-height: 500px) {
+    .tutBox { gap: 4px; padding: 10px 18px 10px; }
+    #tutIcon { font-size: 30px; }
+    #tutTitle { font-size: 18px; }
+    #tutText { font-size: 14px; line-height: 1.5; min-height: 6em; }
+    .tutNav button { padding: 5px 14px; font-size: 15px; }
+  }
+  #petMenu { position: fixed; z-index: 6; display: flex; flex-direction: column; gap: 6px; padding: 6px; background: #1e142c;
+             border: 3px solid #000; border-radius: 12px; }
+  #petMenu button { padding: 8px 14px; font-size: 17px; font-weight: bold; border: 3px solid #000; border-radius: 10px; background: #fff;
+                    color: #222; cursor: pointer; white-space: nowrap; box-shadow: 0 3px 0 #000; font-family: inherit; }
+  #petMenu.give { display: grid; grid-template-columns: repeat(2, auto); max-height: calc(100vh - 20px); overflow-y: auto; }
+  #petMenu button[data-act="back"] { grid-column: 1 / -1; }
+  #petMenu button:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
   #hint { position: fixed; left: 10px; bottom: 14px; max-width: calc(100% - 240px); z-index: 3; box-sizing: border-box;
           color: #fff; background: rgba(0,0,0,.6); padding: 8px 14px; border-radius: 10px; font-size: 15px; text-align: center;
           pointer-events: none; }
@@ -48,16 +82,16 @@
             transform: translateX(-105%); transition: transform .18s ease-out; }
   #drawer.open { transform: none; }
   #drawerTop { display: flex; gap: 6px; padding: 8px; align-items: flex-start; }
-  #tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; flex: 1; }
-  #tabs button { padding: 6px 2px; font-size: 15px; font-weight: bold; border: 3px solid #000; border-radius: 10px;
+  #tabs { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; padding-bottom: 6px; touch-action: pan-x; scrollbar-width: thin; }
+  #tabs button { flex: 0 0 auto; padding: 8px 14px; font-size: 15px; font-weight: bold; border: 3px solid #000; border-radius: 10px;
                  background: #ddd; color: #222; cursor: pointer; white-space: nowrap; }
   #tabs button.on { background: #6ccf5f; }
   #btnDrawerClose { width: 40px; height: 40px; font-size: 20px; flex: 0 0 auto; }
-  #items { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; padding: 4px 8px 8px;
-           overflow-y: auto; }
+  #items { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 18px 16px; padding: 8px 12px 12px;
+           overflow-y: auto; touch-action: pan-y; flex: 1; min-height: 0; align-content: start; }
   .item { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100px;
           padding: 6px 4px; box-sizing: border-box; background: #fff; color: #222; border: 3px solid #000; border-radius: 10px;
-          box-shadow: 0 4px 0 #000; font-size: 13px; font-weight: bold; touch-action: none; cursor: grab; text-align: center; }
+          box-shadow: 0 4px 0 #000; font-size: 13px; font-weight: bold; touch-action: pan-y; cursor: grab; text-align: center; }
   .item canvas { image-rendering: pixelated; flex: 0 0 auto; }
   .item.locked { background: #b9b4c4; cursor: pointer; }
   .item.locked canvas { filter: grayscale(1) brightness(.55); }
@@ -220,21 +254,18 @@
 <div id="hudRight" class="hidden">
   <button id="btnSlow" class="hudbtn" aria-label="スロー" data-i18n-aria>🐢</button>
   <button id="btnPause" class="hudbtn" aria-label="一時停止" data-i18n-aria>⏸</button>
-  <button id="btnClear" class="hudbtn" aria-label="ぜんぶ消す" data-i18n-aria>🧹</button>
+  <button id="btnClear" class="hudbtn" aria-label="そうじ" data-i18n-aria>🧹</button>
   <button id="btnFull" class="hudbtn hidden" aria-label="全画面" data-i18n-aria>
     <svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6" fill="none" stroke="#222" stroke-width="3"/></svg>
   </button>
   <button id="btnMap" class="hudbtn" aria-label="マップ" data-i18n-aria>🗺</button>
+  <button id="btnHelpPlay" class="hudbtn" aria-label="あそびかた" data-i18n-aria>❓</button>
 </div>
 <div id="zoomBtns" class="hidden">
   <button id="btnLoose" class="hudbtn" data-i18n>ルーズ</button>
   <button id="btnUp" class="hudbtn" data-i18n>アップ</button>
 </div>
-<div id="trash" class="hidden">🗑</div>
-<div id="rotBtns" class="hidden">
-  <button id="btnRotL" class="hudbtn" aria-label="左に回す" data-i18n-aria>⟲</button>
-  <button id="btnRotR" class="hudbtn" aria-label="右に回す" data-i18n-aria>⟳</button>
-</div>
+<div id="petMenu" class="hidden"></div>
 <div id="hint" class="hidden"></div>
 <div id="drawer">
   <div id="drawerTop">
@@ -249,6 +280,24 @@
 
 <div id="toast" class="hidden"></div>
 <div id="dialog" class="hidden"></div>
+<div id="news" class="hidden">
+  <div class="tutBox newsBox">
+    <button id="newsClose" class="hudbtn" aria-label="とじる" data-i18n-aria>✕</button>
+    <h2 data-i18n>📰 ニュース</h2>
+    <div id="newsList"></div>
+    <div class="tutNav"><button id="newsOk" data-i18n>閉じる</button></div>
+  </div>
+</div>
+<div id="tutorial" class="hidden">
+  <div class="tutBox">
+    <button id="tutClose" class="hudbtn" aria-label="とじる" data-i18n-aria>✕</button>
+    <div id="tutIcon"></div>
+    <h2 id="tutTitle"></h2>
+    <p id="tutText"></p>
+    <div id="tutDots"></div>
+    <div class="tutNav"><button id="tutPrev" data-i18n>◀ もどる</button><button id="tutNext"></button></div>
+  </div>
+</div>
 
 <div id="home" class="screen">
   <div id="coinPill" class="coin">🪙 <span id="coinHome">0</span></div>
@@ -260,8 +309,10 @@
     <button id="btnShop" class="small" data-i18n>🛒 ショップ</button>
     <button id="btnMods" class="small" data-i18n>🛠 モッド</button>
     <button id="btnSettings" class="small" data-i18n>⚙ せってい</button>
+    <button id="btnHelp" class="small" data-i18n>❓ あそびかた</button>
+    <button id="btnNews" class="small"><span data-i18n>📰 ニュース</span><b id="newsBadge" class="hidden">NEW</b></button>
   </div>
-  <p class="ver"><span data-i18n>ブラウザ版</span> 0.8</p>
+  <p class="ver"><span data-i18n>ブラウザ版</span> 0.9</p>
 </div>
 
 <div id="shop" class="screen hidden">
@@ -319,7 +370,9 @@
 // matter.min.js がとなりに無いときは、ネットから読む
 if (!window.Matter) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"><\/script>');
 </script>
+<script>try { window.__returning = !!localStorage.getItem("grape-simulator-save"); } catch (e) { window.__returning = false; }</script>
 <script src="lang.js"></script>
+<script src="news.js"></script>
 <script src="sound.js"></script>
 <script src="shop.js"></script>
 <script src="mods.js"></script>
