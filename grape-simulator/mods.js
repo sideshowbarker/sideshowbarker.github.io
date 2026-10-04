@@ -1,5 +1,5 @@
 // グレープシミュレーターのモッド（自分で作るキャラや物）と、モッドエディター。index.html で、shop.js の次、game.js より先に読みこむ。
-// 作ったモッドは、このブラウザに保存される。コード（GRAPEMOD1: で始まる文字）やファイルにして、友だちにわたせる。
+// 作ったモッドは、このブラウザに保存される。コード（GRAPEMOD2: で始まる文字。GRAPEMOD1: の古いコードも読める）やファイルにして、友だちにわたせる。
 // 値段をつけて「売りに出す」こともできる（しくみは shop.js の上に書いてある）。
 // よそから来たモッドは、形と数字をきびしく確かめてから使う（おかしなデータは読みこまない）。
 (() => {
@@ -7,10 +7,16 @@
 const tr = window.GrapeLang.t;
 const SHOP = window.GrapeShop;
 const STORE_KEY = 'grape-simulator-mods';
-const CODE_PREFIX = 'GRAPEMOD1:';
-const IDX = '0123456789abcdefghijklmn';   // 色の番号（24色まで）を1文字で書く。「.」は透明
-const MAX_COLORS = 24, MAX_MODS = 60, MAX_CODE = 20000;
+const CODE_PREFIX = 'GRAPEMOD1:';    // 古いコード（JSON をそのまま書いた、長いコード）。読みこみだけできる
+const CODE2_PREFIX = 'GRAPEMOD2:';   // みじかいコード（数字や色を、つめて書いて、同じ文字のならびは「文字*回数」にする）
+const IDX = '0123456789abcdefghijklmnopqrstuv';   // 色の番号（32色まで）を1文字で書く。「.」は透明。ゲーム本体の MOD_KEYS と、同じ長さ
+const MAX_COLORS = 32, MAX_MODS = 60, MAX_CODE = 40000;
+const MAX_W = 64, MAX_H = 40;             // 物の絵の、いちばん大きい大きさ（ドット）
 const HEAD_W = 9, HEAD_H = 11;            // キャラの頭の絵（上の2行は、へたやかみの毛。その下の 9×9 が顔）
+// 頭いがいの体の絵（どう・うで・あし）。大きさは、ゲーム本体（game.js の BODY）の形と合わせてある。あし1つの絵は、ふとももと すねの、りょうほうに使う
+const PART_SIZE = { torso: [4, 11], arm: [2, 7], leg: [3, 8] };
+const PARTS = [['head', '顔'], ['torso', 'どう'], ['arm', 'うで'], ['leg', 'あし']];
+const PX_KEY = { head: 'px', torso: 'torsoPx', arm: 'armPx', leg: 'legPx' };
 const PRESETS = ['#111111', '#ffffff', '#9aa6b1', '#5a5a5a', '#d23a2a', '#e8762a', '#f5d33a', '#5cb85c', '#2f7a2f',
                  '#3c7dd9', '#24508f', '#8a4bbf', '#ff7ab8', '#9c6b3f', '#6b4a2b', '#f0c8a0'];
 // えらぶ物のリスト：[データに書く値, 画面に出す言葉]（言葉は tr() で英語にもなる）
@@ -21,6 +27,8 @@ const KINDS = [['plain', 'ふつう'], ['blade', '刃'], ['gun', '銃'], ['bomb'
 const WEIGHTS = [[0, 'かるい'], [1, 'ふつう'], [2, 'おもい']];
 const TOUGH = [[0.5, 'もろい'], [1, 'ふつう'], [2, '丈夫'], [3, 'すごく丈夫']];
 const OFF_ON = [[0, 'なし'], [1, 'あり']];
+// キャラの行動：じっとしている、うろうろあるく、ほかのキャラをおそう（追いかけて、こうげきする）
+const BEHAVIORS = [['still', 'じっとしている'], ['wander', 'うろうろあるく'], ['attack', 'ほかのキャラをおそう']];
 const labels = (list) => list.map(([v, text]) => [v, tr(text)]);
 const toast = (text) => SHOP.toast(text);
 
@@ -32,6 +40,15 @@ const round = (v, k) => Math.round(v * k) / k;
 const cleanName = (v) => SHOP.cleanName(v) || tr('ななしのモッド');
 const isOneOf = (list, v) => list.some(([k]) => k === v);
 const PLAYER_ID = /^[a-z0-9]{8}$/, MOD_ID = /^mod_[a-z0-9]{8}$/;
+const PX_RE = /^[.0-9a-v]*$/;
+// どう・うで・あしの絵（省略や、こわれたデータなら、からの絵にする。かならず描かなくていい）
+function parsePart(raw, w, h) {
+  const blank = Array(h).fill('.'.repeat(w));
+  if (!Array.isArray(raw) || raw.length !== h) return blank;
+  const rows = raw.map((r) => (typeof r === 'string' && r.length === w && PX_RE.test(r) ? r : null));
+  return rows.some((r) => r == null) ? blank : rows;
+}
+const hasInk = (px) => px.some((r) => /[^.]/.test(r));
 function validate(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error(tr('モッドのデータではありません'));
   const type = raw.type === 'char' || raw.type === 'thing' ? raw.type : null;
@@ -43,21 +60,24 @@ function validate(raw) {
     if (!v) throw new Error(tr('色のデータがおかしいです'));
     return v;
   });
-  const w = type === 'char' ? HEAD_W : Math.round(num(raw.w, 4, 32, 12));
-  const h = type === 'char' ? HEAD_H : Math.round(num(raw.h, 2, 16, 5));
+  const w = type === 'char' ? HEAD_W : Math.round(num(raw.w, 4, MAX_W, 12));
+  const h = type === 'char' ? HEAD_H : Math.round(num(raw.h, 2, MAX_H, 5));
   if (!Array.isArray(raw.px) || raw.px.length !== h) throw new Error(tr('絵のデータがおかしいです'));
   let painted = 0;
+  const clip = (r) => [...r].map((ch) => {
+    if (ch === '.' || IDX.indexOf(ch) >= colors.length) return '.';
+    painted++;
+    return ch;
+  }).join('');
   const px = raw.px.map((r) => {
-    if (typeof r !== 'string' || r.length !== w || !/^[.0-9a-n]*$/.test(r)) throw new Error(tr('絵のデータがおかしいです'));
-    return [...r].map((ch) => {
-      if (ch === '.' || IDX.indexOf(ch) >= colors.length) return '.';
-      painted++;
-      return ch;
-    }).join('');
+    if (typeof r !== 'string' || r.length !== w || !PX_RE.test(r)) throw new Error(tr('絵のデータがおかしいです'));
+    return clip(r);
   });
   if (!painted) throw new Error(tr('絵が何もかいてありません'));
   const m = { v: 1, type, name: cleanName(raw.name), colors, px };
   if (type === 'char') {
+    // どう・うで・あしは、かかなければ、ふつうの形のまま（からの絵）
+    for (const [part, [pw, ph]] of Object.entries(PART_SIZE)) m[PX_KEY[part]] = parsePart(raw[PX_KEY[part]], pw, ph).map(clip);
     m.face = isOneOf(FACES, raw.face) ? raw.face : 'fruit';
     m.skin = color(raw.skin, '#8a4bbf');
     m.shirt = color(raw.shirt, '#5cb85c');
@@ -66,6 +86,10 @@ function validate(raw) {
     m.tough = isOneOf(TOUGH, Number(raw.tough)) ? Number(raw.tough) : 1;
     m.weight = Math.round(num(raw.weight, 0, 2, 1));
     m.sparks = raw.sparks === true;
+    m.undead = raw.undead === true;                                   // 死んでも、しばらくすると起き上がる（ゾンビ）
+    m.behavior = isOneOf(BEHAVIORS, raw.behavior) ? raw.behavior : 'still';
+    m.speed = Math.round(num(raw.speed, 1, 5, 2));                    // あるくはやさ
+    m.power = round(num(raw.power, 0.5, 3, 1), 10);                   // こうげきの強さ（おそうとき）
   } else {
     m.w = w; m.h = h;
     m.kind = isOneOf(KINDS, raw.kind) ? raw.kind : 'plain';
@@ -148,25 +172,85 @@ function exportData(m) {
   if (isMine(m)) data.by = SHOP.me().name;
   return data;
 }
+// みじかいコード：中身を、つぎの順番の配列にして、JSON にして、base64url にする。
+//  キャラ [ 'c', 名前, 色, 絵, 顔, 肌, 服, りんかく, 血, 丈夫さ, 重さ, 火花, ゾンビ, こうどう, はやさ, 強さ, 作った人, 作った人の名前, 売り物の番号, 値段 ]
+//  物    [ 't', 名前, 色, 絵, はば, たかさ, しゅるい, 重さ, はねる強さ, 刃のはじまり, 銃の強さ, れんしゃ, 導火線, 爆発の強さ, 作った人, 作った人の名前, 売り物の番号, 値段 ]
+// 色は # をとって 6文字ずつつなげる。絵は 1行ずつ「/」でつなぎ、同じ文字が4つ以上ならぶ所は「文字*長さ」（長さは RUN の1文字）にする
+const hex6 = (colors) => colors.map((c) => c.slice(1)).join('');
+const unhex6 = (s) => { const out = []; for (let i = 0; i + 6 <= s.length; i += 6) out.push('#' + s.slice(i, i + 6)); return out; };
+const RUN = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-';   // 同じ文字のならびの長さ（4〜67）を、1文字で書く
+const enRows = (rows) => rows.map((r, n) => {
+  if (n && r === rows[n - 1]) return '=';   // 上の行と同じなら「=」
+  let out = '';
+  for (let i = 0; i < r.length;) {
+    let j = i;
+    while (j < r.length && r[j] === r[i]) j++;
+    out += j - i >= 4 ? r[i] + '*' + RUN[j - i - 4] : r.slice(i, j);
+    i = j;
+  }
+  return out;
+}).join('/');
+const deRows = (text) => String(text).split('/').reduce((rows, r) => {
+  if (r === '=' && rows.length) { rows.push(rows[rows.length - 1]); return rows; }
+  let out = '';
+  for (let i = 0; i < r.length; i++) {
+    if (r[i + 1] === '*') {
+      const n = RUN.indexOf(r[i + 2]) + 4;
+      if (n < 4 || n > MAX_W) throw new Error('rle');
+      out += r[i].repeat(n);
+      i += 2;
+    } else out += r[i];
+    if (out.length > MAX_W * 2) throw new Error('rle');
+  }
+  rows.push(out);
+  return rows;
+}, []);
+const b64url = (bin) => btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64url = (s) => atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4));
 function encode(m) {
+  const d = exportData(m), sale = d.sale || {};
+  const tail = [d.author || '', d.by || '', sale.id || '', sale.price || 0];
+  const arr = d.type === 'char'
+    ? ['c', d.name, hex6(d.colors), enRows(d.px), enRows(d.torsoPx), enRows(d.armPx), enRows(d.legPx),
+       FACES.findIndex(([k]) => k === d.face), d.skin.slice(1), d.shirt.slice(1), d.outline.slice(1), d.blood.slice(1),
+       d.tough, d.weight, d.sparks ? 1 : 0, d.undead ? 1 : 0, BEHAVIORS.findIndex(([k]) => k === d.behavior), d.speed, d.power, ...tail]
+    : ['t', d.name, hex6(d.colors), enRows(d.px), d.w, d.h, KINDS.findIndex(([k]) => k === d.kind), d.weight, d.bounce, d.bladeFrom, d.gunPower, d.gunAuto ? 1 : 0, d.fuse, d.power, ...tail];
   let bin = '';
-  for (const b of new TextEncoder().encode(JSON.stringify(exportData(m)))) bin += String.fromCharCode(b);
-  return CODE_PREFIX + btoa(bin);
+  for (const b of new TextEncoder().encode(JSON.stringify(arr))) bin += String.fromCharCode(b);
+  return CODE2_PREFIX + b64url(bin);
+}
+function fromCompact(a) {
+  if (!Array.isArray(a)) throw new Error('shape');
+  const sale = (id, price) => (id && price ? { id, price } : undefined);
+  if (a[0] === 'c') {
+    return { v: 1, type: 'char', name: a[1], colors: unhex6(String(a[2])), px: deRows(a[3]),
+             torsoPx: deRows(a[4]), armPx: deRows(a[5]), legPx: deRows(a[6]),
+             face: (FACES[a[7]] || [])[0], skin: '#' + a[8], shirt: '#' + a[9],
+             outline: '#' + a[10], blood: '#' + a[11], tough: a[12], weight: a[13], sparks: a[14] === 1, undead: a[15] === 1, behavior: (BEHAVIORS[a[16]] || [])[0],
+             speed: a[17], power: a[18], author: a[19], by: a[20], sale: sale(a[21], a[22]) };
+  }
+  if (a[0] === 't') {
+    return { v: 1, type: 'thing', name: a[1], colors: unhex6(String(a[2])), px: deRows(a[3]), w: a[4], h: a[5], kind: (KINDS[a[6]] || [])[0], weight: a[7], bounce: a[8],
+             bladeFrom: a[9], gunPower: a[10], gunAuto: a[11] === 1, fuse: a[12], power: a[13], author: a[14], by: a[15], sale: sale(a[16], a[17]) };
+  }
+  throw new Error('shape');
 }
 function decode(text) {
   const s = String(text || '').replace(/\s+/g, '');
   if (s.length > MAX_CODE) throw new Error(tr('コードが長すぎます'));
-  if (!s.startsWith(CODE_PREFIX)) throw new Error(tr('モッドのコード（GRAPEMOD1:）か、お礼コード（GRAPEPAY1:）をはってね'));
+  const two = s.startsWith(CODE2_PREFIX);
+  if (!two && !s.startsWith(CODE_PREFIX)) throw new Error(tr('モッドのコード（GRAPEMOD1:）か、お礼コード（GRAPEPAY1:）をはってね'));
   let raw;
   try {
-    const bin = atob(s.slice(CODE_PREFIX.length));
+    const bin = two ? unb64url(s.slice(CODE2_PREFIX.length)) : atob(s.slice(CODE_PREFIX.length));
     raw = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
+    if (two) raw = fromCompact(raw);
   } catch (e) { throw new Error(tr('コードが読めません（とちゅうで切れているかも）')); }
   return validate(raw);
 }
 function fromText(text) {
   const t = String(text).trim();
-  if (t.startsWith(CODE_PREFIX)) return decode(t);
+  if (t.startsWith(CODE_PREFIX) || t.startsWith(CODE2_PREFIX)) return decode(t);
   let raw;
   try { raw = JSON.parse(t); } catch (e) { throw new Error(tr('モッドのファイルではありません')); }
   return validate(raw);
@@ -399,20 +483,23 @@ function onFile() {
 function newChar() {
   return { v: 1, type: 'char', name: tr('わたしのキャラ'), colors: ['#2e1442', '#8a4bbf', '#b98be0', '#5cb85c', '#2f7a2f'],
            px: ['....4....', '....33...', '.0000000.', '011111110', '012111110'].concat(Array(5).fill('011111110'), ['.0000000.']),
-           face: 'fruit', skin: '#8a4bbf', shirt: '#5cb85c', outline: '#2e1442', blood: '#d0182e', tough: 1, weight: 1, sparks: false };
+           face: 'fruit', skin: '#8a4bbf', shirt: '#5cb85c', outline: '#2e1442', blood: '#d0182e', tough: 1, weight: 1, sparks: false,
+           undead: false, behavior: 'still', speed: 2, power: 1,
+           torsoPx: Array(11).fill('.'.repeat(4)), armPx: Array(7).fill('.'.repeat(2)), legPx: Array(8).fill('.'.repeat(3)) };
 }
 function newThing() {
   return { v: 1, type: 'thing', name: tr('わたしの物'), colors: [], w: 12, h: 5, px: Array(5).fill('.'.repeat(12)),
            kind: 'plain', weight: 1, bounce: 0.1, bladeFrom: 6, gunPower: 25, gunAuto: false, fuse: 3, power: 1 };
 }
-let ed = null;   // 作っているモッド：{ m, isNew, undo, tool, color, custom }
+let ed = null;   // 作っているモッド：{ m, isNew, undo, tool, color, custom, brush, part }
 let gridCanvas, paletteEl, toolsEl, settingsEl, previewEl, stroke = null;
-const gw = () => (ed.m.type === 'char' ? HEAD_W : ed.m.w);
-const gh = () => (ed.m.type === 'char' ? HEAD_H : ed.m.h);
+const gw = () => (ed.m.type === 'char' ? (ed.part === 'head' ? HEAD_W : PART_SIZE[ed.part][0]) : ed.m.w);
+const gh = () => (ed.m.type === 'char' ? (ed.part === 'head' ? HEAD_H : PART_SIZE[ed.part][1]) : ed.m.h);
+const curPx = () => ed.m[PX_KEY[ed.part]];
 function edit(m, isNew) {
   build();
   const first = m.colors[1] || m.colors[0] || PRESETS[0];
-  ed = { m, isNew, undo: [], tool: 'pen', color: first, custom: '#ff0000' };
+  ed = { m, isNew, undo: [], tool: 'pen', color: first, custom: '#ff0000', brush: 1, part: 'head' };
   listPanel.classList.add('hidden');
   editPanel.classList.remove('hidden');
   backBtn().classList.add('hidden');
@@ -428,12 +515,17 @@ function closeEditor() {
 }
 // 使っていない色を消して、番号をつめる
 function compact(m) {
+  const arrays = [m.px, m.torsoPx, m.armPx, m.legPx].filter(Array.isArray);
   const used = new Set();
-  for (const r of m.px) for (const ch of r) if (ch !== '.') used.add(IDX.indexOf(ch));
+  for (const arr of arrays) for (const r of arr) for (const ch of r) if (ch !== '.') used.add(IDX.indexOf(ch));
   const keep = m.colors.map((c, i) => i).filter((i) => used.has(i));
   const to = new Map(keep.map((old, i) => [old, i]));
   m.colors = keep.map((i) => m.colors[i]);
-  m.px = m.px.map((r) => [...r].map((ch) => (ch === '.' ? '.' : IDX[to.get(IDX.indexOf(ch))])).join(''));
+  const remap = (r) => [...r].map((ch) => (ch === '.' ? '.' : IDX[to.get(IDX.indexOf(ch))])).join('');
+  m.px = m.px.map(remap);
+  if (m.torsoPx) m.torsoPx = m.torsoPx.map(remap);
+  if (m.armPx) m.armPx = m.armPx.map(remap);
+  if (m.legPx) m.legPx = m.legPx.map(remap);
 }
 // 保存する。できたらモッドの id を返す。新しく作ったモッドは、自分が作った物になる
 function commit() {
@@ -471,13 +563,25 @@ function renderEditor() {
   toolsEl = el('div', { className: 'tools' });
   paletteEl = el('div', { className: 'palette' });
   settingsEl = el('div', { className: 'edRight' });
+  const left = [gridCanvas, toolsEl, paletteEl];
+  if (m.type === 'char') {   // 顔・どう・うで・あし の切りかえ（あしの絵は、ふとももと すね の りょうほうに使う）
+    const partsEl = el('div', { className: 'seg parts' });
+    for (const [key, label] of PARTS) {
+      const b = button(tr(label), () => { ed.part = key; renderTools(); renderPalette(); drawGrid(); }, '');
+      b.classList.toggle('on', ed.part === key);
+      b.dataset.part = key;
+      partsEl.append(b);
+    }
+    left.unshift(partsEl);
+    left.push(note(tr('どう・うで・あしは、かかなくてもいいよ（かかなければ、ふつうの形のまま）。あしの絵は、ふとももと すねの、りょうほうに使うよ。')));
+  }
   editPanel.append(
     el('div', { className: 'edTop' },
       el('span', { className: 'tag', textContent: m.type === 'char' ? tr('キャラクター') : tr('物') }), nameIn,
       button(tr('💾 ほぞん'), () => { if (commit()) closeEditor(); }, 'small go'),
       button(tr('▶ ためす'), () => { const id = commit(); if (id) { closeEditor(); window.GRAPE.tryMod(id); } }),
       sureButton(tr('✕ やめる'), tr('ほんとうにやめる？'), closeEditor)),
-    el('div', { className: 'edMain' }, el('div', { className: 'edLeft' }, gridCanvas, toolsEl, paletteEl), settingsEl));
+    el('div', { className: 'edMain' }, el('div', { className: 'edLeft' }, ...left), settingsEl));
   renderTools();
   renderPalette();
   renderSettings();
@@ -485,15 +589,25 @@ function renderEditor() {
 }
 function renderTools() {
   toolsEl.textContent = '';
-  for (const [id, text] of [['pen', '✏ ペン'], ['eraser', '🧽 けしゴム'], ['fill', '🪣 ぬりつぶし']]) {
+  for (const [id, text] of [['pen', '✏ ペン'], ['eraser', '🧽 けしゴム'], ['line', '📏 せん'], ['rect', '▭ しかく'],
+                            ['fill', '🪣 ぬりつぶし'], ['eyedrop', '💧 スポイト']]) {
     const b = button(tr(text), () => { ed.tool = id; renderTools(); renderPalette(); });
     b.classList.toggle('on', ed.tool === id);
     b.dataset.tool = id;
     toolsEl.append(b);
   }
-  toolsEl.append(button(tr('↩ もどす'), undo), sureButton(tr('🗑 ぜんぶけす'), tr('ほんとうに？'), () => {
+  if (ed.tool === 'pen' || ed.tool === 'eraser' || ed.tool === 'line') {   // ふとさ（1〜4ドット四方）
+    const box = el('div', { className: 'seg' });
+    for (const n of [1, 2, 3, 4]) {
+      const b = button(String(n), () => { ed.brush = n; renderTools(); }, '');
+      b.classList.toggle('on', ed.brush === n);
+      box.append(b);
+    }
+    toolsEl.append(field(tr('ふとさ'), box));
+  }
+  toolsEl.append(button(tr('↩ もどす'), undo), sureButton(tr('🗑 けす'), tr('ほんとうに？'), () => {
     pushUndo();
-    ed.m.px = ed.m.px.map((r) => '.'.repeat(r.length));
+    ed.m[PX_KEY[ed.part]] = curPx().map((r) => '.'.repeat(r.length));
     drawGrid();
   }));
 }
@@ -553,7 +667,7 @@ function sizeField(label, key, lo, hi) {
     renderSettings();
     drawGrid();
   };
-  return field(label, el('div', { className: 'range' }, button('−', () => change(-1), ''), out, button('＋', () => change(1), '')));
+  return field(label, el('div', { className: 'range' }, button('−4', () => change(-4), ''), button('−', () => change(-1), ''), out, button('＋', () => change(1), ''), button('＋4', () => change(4), '')));
 }
 function note(text) { return el('p', { className: 'note', textContent: text }); }
 function renderSettings() {
@@ -569,10 +683,17 @@ function renderSettings() {
       seg('tough', tr('丈夫さ'), labels(TOUGH), m.tough, (v) => { m.tough = v; }),
       seg('weight', tr('重さ'), labels(WEIGHTS), m.weight, (v) => { m.weight = v; }),
       seg('sparks', tr('ロボみたいに、オイルと火花'), labels(OFF_ON), m.sparks ? 1 : 0, (v) => { m.sparks = v === 1; }),
+      seg('undead', tr('ゾンビみたいに、死んでも起き上がる'), labels(OFF_ON), m.undead ? 1 : 0, (v) => { m.undead = v === 1; }),
+      seg('behavior', tr('こうどう'), labels(BEHAVIORS), m.behavior, (v) => { m.behavior = v; renderSettings(); }),
       note(tr('赤い四角の中が顔。うすい黒い点の所に、目と口が出る。')));
+    if (m.behavior !== 'still') settingsEl.append(rangeField(tr('あるくはやさ'), 1, 5, 1, m.speed, (v) => { m.speed = v; }));
+    if (m.behavior === 'attack') {
+      settingsEl.append(rangeField(tr('こうげきの強さ'), 0.5, 3, 0.5, m.power, (v) => { m.power = v; }),
+                        note(tr('おそうキャラは、ちかくにいる ほかのキャラをおいかけて、かみついたり、なぐったりする。おそわれたキャラが死ぬと、おそったキャラがゾンビなら、ゾンビになる。')));
+    }
   } else {
     settingsEl.append(
-      el('div', { className: 'colors' }, sizeField(tr('はば'), 'w', 4, 32), sizeField(tr('たかさ'), 'h', 2, 16)),
+      el('div', { className: 'colors' }, sizeField(tr('はば'), 'w', 4, MAX_W), sizeField(tr('たかさ'), 'h', 2, MAX_H)),
       seg('kind', tr('しゅるい'), labels(KINDS), m.kind, (v) => { m.kind = v; renderSettings(); drawGrid(); }),
       seg('weight', tr('重さ'), labels(WEIGHTS), m.weight, (v) => { m.weight = v; }),
       rangeField(tr('はねる強さ'), 0, 0.9, 0.1, m.bounce, (v) => { m.bounce = v; }));
@@ -612,7 +733,8 @@ function resize(w, h) {
   m.bladeFrom = Math.min(m.bladeFrom, w - 1);
 }
 function pushUndo() {
-  ed.undo.push(JSON.stringify({ px: ed.m.px, colors: ed.m.colors, w: ed.m.w, h: ed.m.h }));
+  const m = ed.m;
+  ed.undo.push(JSON.stringify({ px: m.px, torsoPx: m.torsoPx, armPx: m.armPx, legPx: m.legPx, colors: m.colors, w: m.w, h: m.h }));
   if (ed.undo.length > 40) ed.undo.shift();
 }
 function undo() {
@@ -625,19 +747,20 @@ function undo() {
 }
 function cellSize() {
   const phone = innerHeight <= 500;   // 横向きのスマホ：右に設定をならべるので、グリッドは左半分に
-  const availW = Math.min(560, innerWidth * (phone ? 0.48 : innerWidth > 700 ? 0.55 : 0.9));
+  const room = innerWidth > 700 && gw() <= 16 ? 300 : 0;   // 小さい絵のときは、右に設定をならべる。大きい絵のときは、絵を広く使って、設定は下にまわす
+  const availW = Math.min(920, innerWidth * (phone ? 0.48 : 0.94) - room);
   const availH = Math.max(150, innerHeight - (phone ? 150 : 190));
-  return Math.max(6, Math.min(32, Math.floor(availW / gw()), Math.floor(availH / gh())));
+  return Math.max(6, Math.min(56, Math.floor(availW / gw()), Math.floor(availH / gh())));
 }
 function drawGrid() {
-  const m = ed.m, w = gw(), h = gh(), cs = cellSize(), dpr = window.devicePixelRatio || 1;
+  const m = ed.m, w = gw(), h = gh(), cs = cellSize(), dpr = window.devicePixelRatio || 1, px = curPx();
   gridCanvas.width = w * cs * dpr; gridCanvas.height = h * cs * dpr;
   gridCanvas.style.width = w * cs + 'px'; gridCanvas.style.height = h * cs + 'px';
   const x = gridCanvas.getContext('2d');
   x.setTransform(dpr, 0, 0, dpr, 0, 0);
   for (let j = 0; j < h; j++) {
     for (let i = 0; i < w; i++) {
-      const ch = m.px[j][i];
+      const ch = px[j][i];
       x.fillStyle = ch === '.' ? ((i + j) % 2 ? '#e2e2e2' : '#f6f6f6') : m.colors[IDX.indexOf(ch)];
       x.fillRect(i * cs, j * cs, cs, cs);
     }
@@ -648,13 +771,23 @@ function drawGrid() {
   for (let i = 1; i < w; i++) { x.moveTo(i * cs + 0.5, 0); x.lineTo(i * cs + 0.5, h * cs); }
   for (let j = 1; j < h; j++) { x.moveTo(0, j * cs + 0.5); x.lineTo(w * cs, j * cs + 0.5); }
   x.stroke();
-  if (m.type === 'char') {   // 顔の四角と、目と口の場所
+  if (stroke && stroke.shape) {   // せん・しかくの、とちゅうのプレビュー
+    x.save();
+    x.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+    x.lineWidth = 2;
+    x.setLineDash([4, 3]);
+    const x0 = Math.min(stroke.i0, stroke.i) * cs, y0 = Math.min(stroke.j0, stroke.j) * cs;
+    const x1 = (Math.max(stroke.i0, stroke.i) + 1) * cs, y1 = (Math.max(stroke.j0, stroke.j) + 1) * cs;
+    x.strokeRect(x0 + 1, y0 + 1, x1 - x0 - 2, y1 - y0 - 2);
+    x.restore();
+  }
+  if (m.type === 'char' && ed.part === 'head') {   // 顔の四角と、目と口の場所
     x.fillStyle = 'rgba(0, 0, 0, 0.4)';
     for (const [r, c] of FACE_DOTS[m.face]) x.fillRect(c * cs + cs * 0.25, (r + 2) * cs + cs * 0.25, cs * 0.5, cs * 0.5);
     x.strokeStyle = 'rgba(220, 40, 40, 0.8)';
     x.lineWidth = 2;
     x.strokeRect(1, 2 * cs + 1, w * cs - 2, 9 * cs - 2);
-  } else if (m.kind === 'blade') {
+  } else if (m.type === 'thing' && m.kind === 'blade') {
     x.fillStyle = 'rgba(220, 40, 40, 0.85)';
     x.fillRect(m.bladeFrom * cs - 1.5, 0, 3, h * cs);
   }
@@ -672,7 +805,7 @@ function paintValue() {
   let i = m.colors.indexOf(ed.color);
   if (i < 0) {
     if (m.colors.length >= MAX_COLORS) compact(m);
-    if (m.colors.length >= MAX_COLORS) { toast(tr('色は24色までだよ')); return null; }
+    if (m.colors.length >= MAX_COLORS) { toast(tr('色は32色までだよ')); return null; }
     m.colors.push(ed.color);
     i = m.colors.length - 1;
     renderPalette();
@@ -681,17 +814,39 @@ function paintValue() {
 }
 function setCell(i, j, v) {
   if (!inGrid(i, j) || v == null) return;
-  const r = ed.m.px[j];
-  ed.m.px[j] = r.slice(0, i) + v + r.slice(i + 1);
+  const arr = curPx(), r = arr[j];
+  arr[j] = r.slice(0, i) + v + r.slice(i + 1);
+}
+// ふとさぶんの四角をぬる（ペン・けしゴム・せん、で使う）
+function paintBrush(i, j, v) {
+  const n = ed.brush || 1, off = Math.floor((n - 1) / 2);
+  for (let dj = 0; dj < n; dj++) for (let di = 0; di < n; di++) setCell(i - off + di, j - off + dj, v);
+}
+// 2点のあいだの直線ぶん、ふとさをぬる（ブレゼンハムの線）
+function paintLine(i0, j0, i1, j1, v) {
+  let x = i0, y = j0;
+  const dx = Math.abs(i1 - i0), dy = -Math.abs(j1 - j0), sx = i0 < i1 ? 1 : -1, sy = j0 < j1 ? 1 : -1;
+  let err = dx + dy;
+  for (;;) {
+    paintBrush(x, y, v);
+    if (x === i1 && y === j1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x += sx; }
+    if (e2 <= dx) { err += dx; y += sy; }
+  }
+}
+function paintRect(i0, j0, i1, j1, v) {
+  const x0 = Math.min(i0, i1), x1 = Math.max(i0, i1), y0 = Math.min(j0, j1), y1 = Math.max(j0, j1);
+  for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) setCell(i, j, v);
 }
 function fill(i, j, v) {
   if (v == null) return;
-  const from = ed.m.px[j][i];
+  const arr = curPx(), from = arr[j][i];
   if (from === v) return;
   const todo = [[i, j]];
   while (todo.length) {
     const [x, y] = todo.pop();
-    if (!inGrid(x, y) || ed.m.px[y][x] !== from) continue;
+    if (!inGrid(x, y) || arr[y][x] !== from) continue;
     setCell(x, y, v);
     todo.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
   }
@@ -701,24 +856,40 @@ function onGridDown(e) {
   const { i, j } = cellAt(e);
   if (!inGrid(i, j)) return;
   try { gridCanvas.setPointerCapture(e.pointerId); } catch (err) { /* もうはなれた指 */ }
+  if (ed.tool === 'eyedrop') {   // 絵の中から色をひろって、ペンにもどる
+    const ch = curPx()[j][i];
+    if (ch !== '.') ed.color = ed.m.colors[IDX.indexOf(ch)];
+    ed.tool = 'pen';
+    renderTools();
+    renderPalette();
+    return;
+  }
   pushUndo();
   const v = paintValue();
   if (ed.tool === 'fill') { fill(i, j, v); drawGrid(); return; }
+  if (ed.tool === 'line' || ed.tool === 'rect') { stroke = { id: e.pointerId, i0: i, j0: j, i, j, v, shape: ed.tool }; drawGrid(); return; }
   stroke = { id: e.pointerId, i, j, v };
-  setCell(i, j, v);
+  paintBrush(i, j, v);
   drawGrid();
 }
 function onGridMove(e) {
   if (!stroke || e.pointerId !== stroke.id) return;
   const { i, j } = cellAt(e);
+  if (stroke.shape) { stroke.i = i; stroke.j = j; drawGrid(); return; }
   const n = Math.max(Math.abs(i - stroke.i), Math.abs(j - stroke.j));   // すばやく動かしても、とぎれないように線でつなぐ
   for (let k = 1; k <= n; k++) {
-    setCell(Math.round(stroke.i + (i - stroke.i) * k / n), Math.round(stroke.j + (j - stroke.j) * k / n), stroke.v);
+    paintBrush(Math.round(stroke.i + (i - stroke.i) * k / n), Math.round(stroke.j + (j - stroke.j) * k / n), stroke.v);
   }
   stroke.i = i; stroke.j = j;
   if (n) drawGrid();
 }
-function onGridUp(e) { if (stroke && e.pointerId === stroke.id) stroke = null; }
+function onGridUp(e) {
+  if (!stroke || e.pointerId !== stroke.id) return;
+  if (stroke.shape === 'line') paintLine(stroke.i0, stroke.j0, stroke.i, stroke.j, stroke.v);
+  else if (stroke.shape === 'rect') paintRect(stroke.i0, stroke.j0, stroke.i, stroke.j, stroke.v);
+  stroke = null;
+  drawGrid();
+}
 addEventListener('resize', () => { if (ed) drawGrid(); });
 
 window.GrapeMods = {

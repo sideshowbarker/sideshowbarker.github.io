@@ -161,6 +161,49 @@ const TORSO = ['.DD.'].concat(Array(6).fill('DSSD'), Array(3).fill('DPPD'), ['.D
 const ARM = Array(7).fill('PP');
 const LEG_UPPER = Array(8).fill('PP');
 const LEG_LOWER = Array(7).fill('PP.').concat(['PPP']);   // 最後の行が足（前に出っぱる）
+const SUMO_HEAD = [   // 力士の頭（ちょんまげ）
+  '....g....',
+  '...gGg...',
+  '.DGGGGGD.',
+  'DPPPPPPPD',
+  'DPLPPPPPD',
+  'DPPPPPPPD',
+  'DppPPPPPD',
+  'DPPPPPPPD',
+  'DPPPPPPPD',
+  'DpPPPPPpD',
+  '.DDDDDDD.',
+];
+const ROBOSUMO_HEAD = [   // ロボ力士の頭
+  '...gGg...',
+  '....G....',
+  'DDDDDDDDD',
+  'DLLPPPPPD',
+  'DLPPPPPPD',
+  'DPPPPPPPD',
+  'DPPPPPPPD',
+  'DPPPPPPPD',
+  'DPPPPPPPD',
+  'DpppppppD',
+  'DDDDDDDDD',
+];
+const TORSO_SUMO = [   // 力士の胴体（12ドットはば。下の3行がまわし）
+  '.DDDDDDDDDD.',
+  'DPLPPPPPPPpD',
+  'DPPPPPPPPPpD',
+  'DPPPPPPPPPpD',
+  'DPPPPPPPpppD',
+  'DPPPPPPPPPpD',
+  'DPPPPPPPPPpD',
+  'DSSSSSSSSSSD',
+  'DSSyySSSSSSD',
+  'DSSSSSSSSSSD',
+  '.DDDDDDDDDD.',
+];
+const ARM_SUMO = Array(7).fill('PPP');
+const LEG3_UPPER = Array(8).fill('PPPP');
+const LEG3_LOWER = Array(7).fill('PPPP.').concat(['PPPPP']);
+const BUILD_SUMO = { torso: TORSO_SUMO, arm: ARM_SUMO, legU: LEG3_UPPER, legL: LEG3_LOWER };   // 力士の体のドット絵
 const CHAR_COMMON = { K: '#111111', R: '#c0324a' };
 
 // 物のドット絵。色は OBJ_PAL。どれも右向きにかいてある（左向きのときは左右反転する）
@@ -334,6 +377,79 @@ const ANVIL = [
   '..KGGGGGGGGGGK..',
   '.KGGGGGGGGGGGGK.',
   '.KKKKKKKKKKKKKK.',
+];
+const CLUB = [
+  '...........HHHHHHHHHH.',
+  '..........hhhhhhhhhhhh',
+  'hhhhhhhhhhhhhhhhhhhhhh',
+  'HHHHHHHHHHHHHHHHHHHHHH',
+  '..........hhhhhhhhhhhh',
+  '...........HHHHHHHHHH.',
+];
+const SWORD = [
+  '.....y........................',
+  'kjkjkyWWWWWWWWWWWWWWWWWWWWWWWW',
+  'jkjkjyWWWWWWWWWWWWWWWWWWWWWWWW',
+  'kjkjkywwwwwwwwwwwwwwwwwwwwwww.',
+  '.....y........................',
+];
+const SLEDGE = [
+  '....................GGGGGGGG',
+  '....................GsGGGGGG',
+  '....................GGGGGGGg',
+  'hhhhhhhhhhhhhhhhhhhhGGGGGGgg',
+  'hhhhhhhhhhhhhhhhhhhhGGGGGGgg',
+  'HHHHHHHHHHHHHHHHHHHHGGGGGGGg',
+  'HHHHHHHHHHHHHHHHHHHHGGGGGGGg',
+  '....................GGGGGGGG',
+  '....................GGGGGGgg',
+  '....................gggggggg',
+];
+const SNIPER = [
+  '.........gGGGg....................',
+  'gggggggggggggggggggggggggggggggggs',
+  'hhhhhhhGGGGGGGGGGGGGGGGGGGGGGGGGG.',
+  'hhhhgggggggg......................',
+  '...hh.............................',
+];
+const FLAME = [
+  '.rrrrrrr..............',
+  'rrRrrrrr..............',
+  'rrRrrrrrgggggggggg....',
+  'rrRrrrrrGGGGGGGGGGGGGG',
+  'rrRrrrrrgggggggggggggy',
+  'rrRrrrrr..............',
+  'rrrrrrrr..............',
+  '.rrrrrr...............',
+];
+const MINE = [
+  '...KKKKKK...',
+  '..KgGGGGgK..',
+  '.KGGGrGGGGK.',
+  'KKKKKKKKKKKK',
+];
+const TV = [
+  '..K......K....',
+  '...K....K.....',
+  'KKKKKKKKKKKKKK',
+  'KGGGGGGGGGGGGK',
+  'KGKcWccccccKGK',
+  'KGKccccccccKGK',
+  'KGKccccccccKGK',
+  'KGKccccccccKGK',
+  'KGKccccccccKGK',
+  'KGGGGGGGGGGGGK',
+  '.KK........KK.',
+];
+const DUMBBELL = [
+  '.GGGG............GGGG.',
+  'GgGGGG..........GGGGgG',
+  'GgGGGG..........GGGGgG',
+  'GgGGGGssssssssssGGGGgG',
+  'GgGGGGssssssssssGGGGgG',
+  'GgGGGG..........GGGGgG',
+  'GgGGGG..........GGGGgG',
+  '.GGGG............GGGG.',
 ];
 const SYRINGE = [   // 右が針
   'K..KKKKKKKK...',
@@ -670,16 +786,16 @@ function withFace(rows, pixels) {
 }
 const shade = (rows) => rows.map((r) => r.replace(/P/g, 'p'));
 function makeCharSprites(ch) {
-  const p = Object.assign({}, CHAR_COMMON, ch.pal);
+  const p = Object.assign({}, CHAR_COMMON, ch.pal), bd = ch.build || {};
   return {
     head_ok: makeSprite(withFace(ch.head, ch.faces.ok), p),
     head_hurt: makeSprite(withFace(ch.head, ch.faces.hurt), p),
     head_ko: makeSprite(withFace(ch.head, ch.faces.ko), p),
     head_dead: makeSprite(withFace(ch.head, ch.faces.dead), p),
-    torso: makeSprite(TORSO, p),
-    armF: makeSprite(ARM, p), armB: makeSprite(shade(ARM), p),
-    legUF: makeSprite(LEG_UPPER, p), legUB: makeSprite(shade(LEG_UPPER), p),
-    legLF: makeSprite(LEG_LOWER, p), legLB: makeSprite(shade(LEG_LOWER), p),
+    torso: makeSprite(bd.torso || TORSO, p),
+    armF: makeSprite(bd.arm || ARM, p), armB: makeSprite(shade(bd.arm || ARM), p),
+    legUF: makeSprite(bd.legU || LEG_UPPER, p), legUB: makeSprite(shade(bd.legU || LEG_UPPER), p),
+    legLF: makeSprite(bd.legL || LEG_LOWER, p), legLB: makeSprite(shade(bd.legL || LEG_LOWER), p),
   };
 }
 
@@ -707,10 +823,43 @@ const CHARS = {
   pineapple: { name: 'パイナップル', head: PINE_HEAD, faces: FRUIT_FACES, tough: 1.5, density: 0.0025,
                blood: '#d0182e', stain: '#8e0b22', hurtTint: '200, 20, 40',
                pal: { D: '#6b3f10', P: '#e8a820', p: '#b07a10', L: '#ffe070', S: '#2f7a8f', G: '#5cb85c', g: '#2f7a2f', y: '#9a5f10' } },
-  zombie: { name: 'ゾンビ', head: ZOMBIE_HEAD, faces: ZOMBIE_FACES, undead: true, density: 0.002, bleedRate: 0.4,
+  zombie: { name: 'ゾンビ', head: ZOMBIE_HEAD, faces: ZOMBIE_FACES, undead: true, behavior: 'attack', speed: 1.5, power: 1, density: 0.002, bleedRate: 0.4,
             blood: '#6a9a2a', stain: '#3d5c14', hurtTint: '70, 120, 30',   // 血は緑
             pal: { D: '#23361a', P: '#8fb870', p: '#6a8f52', L: '#b8d8a0', S: '#6b5a8a', G: '#3a2a1a', g: '#1f160c', y: '#3d2f24',
                    W: '#f0f0d0' } },
+  sumo: { name: '力士', zombieOf: 'zombiesumo', head: SUMO_HEAD, faces: FRUIT_FACES, tough: 2.5, density: 0.004, build: BUILD_SUMO, noClothes: true,
+          body: { torso: [12, 11], arm: [3, 7], leg: [4, 8], armX: 1.5, legX: 2.2 },
+          anchor: { torso: [6, 5.5], armF: [1.5, 3.5], armB: [1.5, 3.5], legUF: [2, 4], legUB: [2, 4], legLF: [2, 4], legLB: [2, 4] },
+          fig: { w: 15, head: [3, 0], torso: [1, 11], armB: [4, 12], armF: [7, 12], legUB: [3, 21], legUF: [7, 21] },
+          note: 'おもくて、とてもじょうぶ。なかなか たおれない',
+          blood: '#d0182e', stain: '#8e0b22', hurtTint: '200, 20, 40',
+          pal: { D: '#5a3320', P: '#f0c08e', p: '#d09868', L: '#ffe0bc', S: '#2a3f8f', G: '#141414', g: '#000000', y: '#e0b030' } },
+  robosumo: { name: 'ロボ力士', head: ROBOSUMO_HEAD, faces: ROBOT_FACES, tough: 4, density: 0.007, sparks: true, bleedRate: 0.3, build: BUILD_SUMO,
+              noClothes: true, body: { torso: [12, 11], arm: [3, 7], leg: [4, 8], armX: 1.5, legX: 2.2 },
+              anchor: { torso: [6, 5.5], armF: [1.5, 3.5], armB: [1.5, 3.5], legUF: [2, 4], legUB: [2, 4], legLF: [2, 4], legLB: [2, 4] },
+              fig: { w: 15, head: [3, 0], torso: [1, 11], armB: [4, 12], armF: [7, 12], legUB: [3, 21], legUF: [7, 21] },
+              note: 'ものすごく重くて、じょうぶな ロボ。注射も刃もきかない',
+              blood: '#2a2a2a', stain: '#161616', hurtTint: '20, 20, 20',
+              pal: { D: '#1f2328', P: '#9aa3ad', p: '#6f7780', L: '#d5dbe1', S: '#c23a2a', G: '#c9ced4', g: '#e23b3b', y: '#e0b030', E: '#39e6ff', e: '#ff8a1f' } },
+  watermelon: { name: 'すいか', head: STRAW_HEAD, faces: FRUIT_FACES, tough: 1.3, density: 0.0025, note: 'すこし丈夫で、ちょっと重い',
+                blood: '#e23b5a', stain: '#a8203a', hurtTint: '226, 59, 90',
+                pal: { D: '#1f4a1a', P: '#4fae4a', p: '#2e7a2c', L: '#a8e0a0', S: '#e23b5a', G: '#2f7a2f', g: '#1b5a1b', y: '#1f5a1c' } },
+  peach: { name: 'もも', head: FRUIT_HEAD, faces: FRUIT_FACES, density: 0.0018, note: 'かるくて、やわらかい',
+           blood: '#d0182e', stain: '#8e0b22', hurtTint: '200, 20, 40',
+           pal: { D: '#7a2e48', P: '#ffb0c0', p: '#e08098', L: '#ffe0e8', S: '#7ac36a', G: '#5cb85c', g: '#2f7a2f' } },
+  lemon: { name: 'レモン', head: BANANA_HEAD, faces: FRUIT_FACES, density: 0.002, note: 'すっぱい顔のふつうの人',
+           blood: '#d0182e', stain: '#8e0b22', hurtTint: '200, 20, 40',
+           pal: { D: '#6b5a0a', P: '#fff04a', p: '#d4c020', L: '#fffbb0', S: '#f0f0f0', G: '#6b4a2b', g: '#3b2412', y: '#c8a810' } },
+  blueberry: { name: 'ブルーベリー', head: FRUIT_HEAD, faces: FRUIT_FACES, density: 0.0016, note: 'とても軽い。すぐ飛んでいく',
+               blood: '#4a5fd0', stain: '#2f3fa0', hurtTint: '74, 95, 208',
+               pal: { D: '#141a4a', P: '#4a5fd0', p: '#2f3fa0', L: '#9fb0ff', S: '#e8e8e8', G: '#5cb85c', g: '#2f7a2f' } },
+  zombiesumo: { name: 'ゾンビ力士', head: SUMO_HEAD, faces: ZOMBIE_FACES, undead: true, behavior: 'attack', speed: 1, power: 2.5, tough: 2.5, density: 0.004, bleedRate: 0.4, build: BUILD_SUMO, noClothes: true, hidden: true,
+                body: { torso: [12, 11], arm: [3, 7], leg: [4, 8], armX: 1.5, legX: 2.2 },
+                anchor: { torso: [6, 5.5], armF: [1.5, 3.5], armB: [1.5, 3.5], legUF: [2, 4], legUB: [2, 4], legLF: [2, 4], legLB: [2, 4] },
+                fig: { w: 15, head: [3, 0], torso: [1, 11], armB: [4, 12], armF: [7, 12], legUB: [3, 21], legUF: [7, 21] },
+                note: 'ゾンビになった力士。死んでも起き上がる',
+                blood: '#6a9a2a', stain: '#3d5c14', hurtTint: '70, 120, 30',
+                pal: { D: '#23361a', P: '#8fb870', p: '#6a8f52', L: '#b8d8a0', S: '#6b5a8a', G: '#1f160c', g: '#000000', y: '#3d2f24', W: '#f0f0d0' } },
   goldrobot: { name: 'ゴールドロボ', head: ROBOT_HEAD, faces: ROBOT_FACES, tough: 3, density: 0.005, sparks: true, bleedRate: 0.3,
                blood: '#2a2a2a', stain: '#161616', hurtTint: '20, 20, 20',
                pal: { D: '#5a4210', P: '#f0c030', p: '#b8901e', L: '#fff3a8', S: '#d23a2a', G: '#fff3a8', g: '#e23b3b',
@@ -718,7 +867,8 @@ const CHARS = {
 };
 
 // 体のつくり（ドット）。ドット絵の大きさと合わせてある
-const BODY = { head: 9, neck: 0.5, torso: [4, 11], arm: [2, 7], leg: [2, 8], shoulder: 1.2, hip: 0.8, armX: 0.6, legX: 1 };
+const GLOBAL_BODY = { head: 9, neck: 0.5, torso: [4, 11], arm: [2, 7], leg: [2, 8], shoulder: 1.2, hip: 0.8, armX: 0.6, legX: 1 };
+const BODY = GLOBAL_BODY;
 const FOOT_BELOW_HEAD = BODY.head / 2 + BODY.neck + BODY.torso[1] - BODY.hip + 2 * BODY.leg[1];   // 頭の中心から足の裏まで
 const FIGURE_DOTS = FOOT_BELOW_HEAD + BODY.head / 2 + 2;                                         // へたまで入れた背の高さ
 const FIG_CENTER = (FOOT_BELOW_HEAD - BODY.head / 2 - 2) / 2;                                    // 頭の中心から体のまん中まで
@@ -741,6 +891,19 @@ const OBJ_SPRITES = {
   bat: makeSprite(BAT, OBJ_PAL), cleaver: makeSprite(CLEAVER, OBJ_PAL), pan: makeSprite(PAN, OBJ_PAL),
   shotgun: makeSprite(SHOTGUN, OBJ_PAL), dynamite: makeSprite(DYNAMITE, OBJ_PAL), molotov: makeSprite(MOLOTOV, OBJ_PAL),
   stone: makeSprite(STONE, OBJ_PAL), anvil: makeSprite(ANVIL, OBJ_PAL),
+  club: makeSprite(CLUB, OBJ_PAL), sword: makeSprite(SWORD, OBJ_PAL), sledge: makeSprite(SLEDGE, OBJ_PAL), sniper: makeSprite(SNIPER, OBJ_PAL),
+  flame: makeSprite(FLAME, OBJ_PAL), mine: makeSprite(MINE, OBJ_PAL), tv: makeSprite(TV, OBJ_PAL), dumbbell: makeSprite(DUMBBELL, OBJ_PAL),
+  bowling: circleSprite(9, (dx, dy, dist, r) => {
+    if (dist > r - 0.8) return '#0c0c14';
+    if ((Math.abs(dx - 0.6) < 0.7 && Math.abs(dy + 1.2) < 0.7) || (Math.abs(dx + 0.9) < 0.7 && Math.abs(dy + 1.2) < 0.7) || (Math.abs(dx - 0.1) < 0.7 && Math.abs(dy) < 0.7)) return '#0c0c14';
+    return dx < -1 && dy < -1 && dist < r * 0.6 ? '#7a8fe0' : '#24387a';
+  }),
+  tire: circleSprite(12, (dx, dy, dist, r) => {
+    if (dist > r - 0.8) return '#0c0c0c';
+    if (dist > r - 3.2) return dx + dy < -2 ? '#3a3a3a' : '#1c1c1c';
+    if (dist > 1.6) return null;
+    return '#a9b2bd';
+  }),
   syringePoison: makeSprite(SYRINGE.map((r) => r.replace(/e/g, 'p')), OBJ_PAL),
   syringeSleep: makeSprite(SYRINGE.map((r) => r.replace(/e/g, 't')), OBJ_PAL),
   syringeZombie: makeSprite(SYRINGE.map((r) => r.replace(/e/g, 'z')), OBJ_PAL),
@@ -799,16 +962,17 @@ function crateSprite(n) {
 
 // キャラの全身の絵（アイテムのひきだしと、スワイプ中の影に使う）
 function makeFigure(kind, s = SPRITES[kind]) {
+  const F = (CHARS[kind] && CHARS[kind].fig) || { w: 9, head: [0, 0], torso: [3, 11], armB: [3, 12], armF: [4, 12], legUB: [3, 21], legUF: [5, 21] };
   const c = document.createElement('canvas');
-  c.width = 9; c.height = 37;
+  c.width = F.w; c.height = 37;
   const x = c.getContext('2d');
-  const put = (name, px, py) => x.drawImage(s[name], px, py);
-  put('armB', 3, 12); put('armB', 3, 19);
-  put('legUB', 3, 21); put('legLB', 3, 29);
-  put('torso', 3, 11);
-  put('legUF', 5, 21); put('legLF', 5, 29);
-  put('head_ok', 0, 0);
-  put('armF', 4, 12); put('armF', 4, 19);
+  const put = (name, [px, py], dy = 0) => x.drawImage(s[name], px, py + dy);
+  put('armB', F.armB); put('armB', F.armB, 7);
+  put('legUB', F.legUB); put('legLB', F.legUB, 8);
+  put('torso', F.torso);
+  put('legUF', F.legUF); put('legLF', F.legUF, 8);
+  put('head_ok', F.head);
+  put('armF', F.armF); put('armF', F.armF, 7);
   return c;
 }
 const FIGURES = {};
@@ -1002,20 +1166,103 @@ const MAPS = [
       { x: 900, y: 250, w: 80, h: 8, look: 'moon' },
     ],
     polys: [[[480, 396], [580, 366], [620, 366], [620, 396]]] },
+  // 公園：池・すべり台・ジャングルジム・ベンチ。池のふちはゆるやかな坂で、あがれる
+  { id: 'park', name: '公園', desc: 'すべり台・ジャングルジム・池', w: 1500, h: 300, theme: 'park', music: 'play',
+    sky: '#a9dcf5', floor: '#7a5230', edge: '#4f9a3a', gravity: 1, start: 200,
+    blocks: [
+      { x: 0, y: 240, w: 560, h: 60, look: 'grass' },
+      { x: 560, y: 282, w: 320, h: 18, look: 'sand' },
+      { x: 880, y: 240, w: 620, h: 60, look: 'grass' },
+      { x: 236, y: 188, w: 18, h: 3, look: 'metal' },
+      { x: 420, y: 196, w: 4, h: 44, look: 'metal' }, { x: 520, y: 196, w: 4, h: 44, look: 'metal' }, { x: 410, y: 196, w: 124, h: 4, look: 'metal' },
+      { x: 450, y: 160, w: 4, h: 36, look: 'metal' }, { x: 490, y: 160, w: 4, h: 36, look: 'metal' }, { x: 440, y: 160, w: 64, h: 4, look: 'metal' },
+      { x: 1000, y: 226, w: 44, h: 4, look: 'wood' }, { x: 1003, y: 230, w: 4, h: 10, look: 'wood' }, { x: 1037, y: 230, w: 4, h: 10, look: 'wood' },
+      { x: 1000, y: 212, w: 3, h: 14, look: 'wood' },
+    ],
+    polys: [
+      Object.assign([[560, 240], [640, 282], [560, 282]]),
+      Object.assign([[880, 240], [800, 282], [880, 282]]),
+      Object.assign([[250, 190], [250, 240], [330, 240]], { style: { top: '#e23b3b', fill: '#b02a2a' } }),   // すべり台
+      [[1120, 240], [1190, 214], [1250, 214], [1320, 240]],
+    ],
+    water: { x: 560, y: 248, w: 320, h: 34 } },
+  // 駅：線路は、ホームより低い。ときどき電車がやってきて、ぶつかった物をはねとばす（ホームに突っ込んでくることもある）
+  { id: 'station', name: '駅', desc: 'ときどき電車が突っ込んでくる！', w: 1600, h: 300, theme: 'station', music: 'play',
+    sky: '#b9d3ea', floor: '#8c887e', edge: '#d9d4c7', gravity: 1, start: 505,
+    blocks: [
+      { x: 0, y: 220, w: 560, h: 80, look: 'platform2' },
+      { x: 560, y: 270, w: 480, h: 30, look: 'track' },
+      { x: 1040, y: 220, w: 560, h: 80, look: 'platform2' },
+      { x: 60, y: 130, w: 400, h: 5, look: 'metal' }, { x: 70, y: 135, w: 4, h: 85, look: 'metal' }, { x: 446, y: 135, w: 4, h: 85, look: 'metal' },
+      { x: 1140, y: 130, w: 400, h: 5, look: 'metal' }, { x: 1150, y: 135, w: 4, h: 85, look: 'metal' }, { x: 1526, y: 135, w: 4, h: 85, look: 'metal' },
+    ],
+    polys: [[[560, 220], [700, 270], [560, 270]], [[1040, 220], [900, 270], [1040, 270]]],
+    train: { y: 270, platY: 220 } },
 ];
 
 // マップの物は、キャラより大きく見えるように、ぜんぶ MAP_SCALE 倍にする（エンドレスは地面を自動で作るので、そのまま）
+
+// バックルーム：黄色い壁紙と、じゅうたんと、蛍光灯の、はてしなく続く めいろ。部屋のかべには、ところどころ出入り口があって、
+// ゆかには、下の階へ落ちる穴がある。めいろは、ぜんぶの部屋がつながるように作る（同じ形が毎回できる）
+function makeBackroomsMap() {
+  const C = 16, R = 4, CW = 90, CH = 70, FT = 6, WT = 6, HOLE = 40;
+  let seed = 4242;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const east = Array.from({ length: R }, () => Array(C).fill(false));    // 右のとなりとつながっているか
+  const south = Array.from({ length: R }, () => Array(C).fill(false));   // 下のとなりとつながっているか
+  const seen = Array.from({ length: R }, () => Array(C).fill(false));
+  const stack = [[0, 0]];
+  seen[0][0] = true;
+  while (stack.length) {   // 深さ優先で、かべをこわしながら進む（どの部屋にも行ける）
+    const [c, r] = stack[stack.length - 1];
+    const next = [[c + 1, r, 'e'], [c - 1, r, 'w'], [c, r + 1, 's'], [c, r - 1, 'n']].filter(([x, y]) => x >= 0 && x < C && y >= 0 && y < R && !seen[y][x]);
+    if (!next.length) { stack.pop(); continue; }
+    const [x, y, d] = next[Math.floor(rnd() * next.length)];
+    if (d === 'e') east[r][c] = true; else if (d === 'w') east[y][x] = true; else if (d === 's') south[r][c] = true; else south[y][x] = true;
+    seen[y][x] = true;
+    stack.push([x, y]);
+  }
+  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {   // ぬけ道をふやす
+    if (c < C - 1 && rnd() < 0.18) east[r][c] = true;
+    if (r < R - 1 && rnd() < 0.12) south[r][c] = true;
+  }
+  const w = C * CW, h = R * CH, blocks = [{ x: 0, y: h - 8, w, h: 8, look: 'bfloor' }];
+  blocks.push({ x: 0, y: 0, w, h: FT, look: 'bfloor', kind: 'ceiling' });
+  for (let r = 0; r < R - 1; r++) {   // ゆか（穴のある所は、あける）。つづくゆかは、ひとつにまとめる
+    let x0 = null;
+    const close = (x1) => { if (x0 != null && x1 > x0) blocks.push({ x: x0, y: (r + 1) * CH - FT, w: x1 - x0, h: FT, look: 'bfloor' }); x0 = null; };
+    for (let c = 0; c < C; c++) {
+      if (south[r][c]) {
+        const hx = c * CW + Math.floor((CW - HOLE) / 2);
+        if (x0 == null) x0 = c * CW;
+        close(hx);
+        x0 = hx + HOLE;
+      } else if (x0 == null) x0 = c * CW;
+    }
+    close(w);
+  }
+  for (let r = 0; r < R; r++) for (let c = 0; c < C - 1; c++) {   // かべ（出入り口のある所は、ない）
+    if (!east[r][c]) blocks.push({ x: (c + 1) * CW - WT / 2, y: r * CH + FT, w: WT, h: CH - FT - (r === R - 1 ? 8 : FT), look: 'bwall' });
+  }
+  let start = CW / 2;
+  for (let c = 0; c < C; c++) if (!south[0][c]) { start = c * CW + CW / 2; break; }   // ゆかのある部屋から、はじめる
+  return { id: 'backrooms', name: 'バックルーム', desc: 'はてしない黄色い部屋の、めいろ', w, h, theme: 'backrooms', music: 'play', cell: [CW, CH],
+           sky: '#d8c766', floor: '#7a6a2e', edge: '#b8a850', gravity: 1, start, blocks };
+}
+MAPS.push(makeBackroomsMap());
 const MAP_SCALE = 1.5;
 function scaleMap(m) {
   const k = MAP_SCALE, r = (v) => Math.round(v * k);
   const box = (o) => { const x1 = r(o.x + o.w), y1 = r(o.y + o.h); o.x = r(o.x); o.y = r(o.y); o.w = x1 - o.x; o.h = y1 - o.y; };
   m.w = r(m.w); m.h = r(m.h); m.start = r(m.start);
   for (const b of m.blocks) box(b);
-  for (const p of m.polys || []) for (const pt of p) { pt[0] = r(pt[0]); pt[1] = r(pt[1]); }
+  for (const p of m.polys || []) for (const pt of p) { pt[0] = r(pt[0]); pt[1] = r(pt[1]); }   // (色を持つ坂は、点のならびに style がついている)
   for (const sp of m.spikes || []) { const x1 = r(sp.x + sp.w); sp.x = r(sp.x); sp.y = r(sp.y); sp.w = x1 - sp.x; }
   if (m.water) box(m.water);
   for (const L of m.lava || []) box(L);
   if (m.vent) { m.vent.x = r(m.vent.x); m.vent.y = r(m.vent.y); }
+  if (m.train) { m.train.y = r(m.train.y); m.train.platY = r(m.train.platY); }
+  if (m.cell) m.cell = [r(m.cell[0]), r(m.cell[1])];
 }
 for (const m of MAPS) if (!m.endless) scaleMap(m);
 
@@ -1098,6 +1345,20 @@ function paintSky(c, m, rnd, top) {
     }
     return;
   }
+  if (m.theme === 'backrooms') {   // 黄色い壁紙（たてじま）と、部屋ごとの蛍光灯
+    for (let x = 0; x < w; x++) {
+      c.fillStyle = Math.floor(x / 3) % 2 ? '#d1bf5e' : '#dccb70';
+      c.fillRect(x, 0, 1, top + 8);
+    }
+    const [cw, ch] = m.cell;
+    for (let cy = 0; cy < m.h; cy += ch) for (let cx = 0; cx < w; cx += cw) {
+      c.fillStyle = 'rgba(255, 251, 210, 0.16)'; c.fillRect(cx + cw / 2 - 22, cy + 6, 44, 24);
+      c.fillStyle = LINE_COLOR; c.fillRect(cx + cw / 2 - 15, cy + 5, 30, 5);
+      c.fillStyle = '#fffbe0'; c.fillRect(cx + cw / 2 - 14, cy + 6, 28, 3);
+      c.fillStyle = '#b8a850'; c.fillRect(cx, cy + ch - 13, cw, 2);   // 壁のはば木
+    }
+    return;
+  }
   if (m.theme === 'lab') {
     c.fillStyle = '#c3cbd2';
     for (let y = 0; y < top; y += 12) {
@@ -1133,7 +1394,10 @@ function paintSky(c, m, rnd, top) {
   if (m.theme === 'sea') disc(c, Math.floor(w * 0.12), Math.floor(top * 0.25), 10, () => '#fff3b0');
   const n = Math.max(2, Math.floor(w / 90));
   for (let i = 0; i < n; i++) cloud(c, Math.floor(rnd() * (w - 30)), Math.floor(8 + rnd() * top * 0.3), 16 + Math.floor(rnd() * 18));
-  if (m.theme === 'city') {
+  if (m.theme === 'park') {   // 木
+    for (const tx of [60, 130, 350, 960, 1180, 1400]) bigTree(c, Math.round(tx * MAP_SCALE), top);
+  }
+  if (m.theme === 'city' || m.theme === 'station') {
     let x = 0;
     while (x < w) {
       const bw = 14 + Math.floor(rnd() * 26), bh = 30 + Math.floor(rnd() * 90);
@@ -1177,6 +1441,22 @@ function paintBlock(c, m, b, rnd, mask) {
       fill(LINE_COLOR, x - 1, y - 1, w + 2, 1); fill(m.edge, x, y, w, 2); fill(m.floor, x, y + 2, w, h - 2);
       specks('#c2a268', Math.floor(w * h / 30));
       break;
+    case 'platform2':   // 駅のホーム
+      fill(LINE_COLOR, x - 1, y - 1, w + 2, h + 2); fill('#8c887e', x, y, w, h); fill('#d9d4c7', x, y, w, 3); fill('#e8c547', x, y + 1, w, 1);
+      for (let xx = x + 6; xx < x + w; xx += 12) fill('#77736a', xx, y + 3, 1, h - 3);
+      break;
+    case 'track':   // 線路：バラスト、まくらぎ、レール
+      fill(LINE_COLOR, x, y - 1, w, 1); fill('#6f6a63', x, y, w, h); fill('#c9d0d6', x, y, w, 1); fill('#8a939c', x, y + 1, w, 1);
+      for (let xx = x + 2; xx < x + w; xx += 7) fill('#5a3a1e', xx, y + 4, 4, 4);
+      specks('#4a4640', Math.floor(w * h / 20));
+      break;
+    case 'bfloor':   // じゅうたん
+      fill(LINE_COLOR, x - 1, y - 1, w + 2, h + 2); fill('#8f7f38', x, y, w, h); fill('#a89846', x, y, w, 1);
+      for (let xx = x + 2; xx < x + w; xx += 5) fill('#77672c', xx, y + Math.floor(h / 2), 1, 1);
+      break;
+    case 'bwall':   // 壁紙のかべ
+      fill(LINE_COLOR, x - 1, y, w + 2, h); fill('#c2b155', x, y, w, h); fill('#a99a44', x, y, 1, h); fill('#d8c766', x + w - 1, y, 1, h);
+      break;
     case 'moon':
       fill(LINE_COLOR, x - 1, y - 1, w + 2, h + 2); fill(m.edge, x, y, w, 2); fill(m.floor, x, y + 2, w, h - 2);
       specks('#575b66', Math.floor(w * h / 25));
@@ -1219,8 +1499,8 @@ function paintPoly(c, m, poly, mask) {
     if (top === Infinity) continue;
     const t = Math.round(top), btm = Math.round(bottom);
     c.fillStyle = LINE_COLOR; c.fillRect(x, t - 1, 1, 1);
-    c.fillStyle = m.polyTop || '#5cb85c'; c.fillRect(x, t, 1, 3);
-    c.fillStyle = m.polyFill || m.floor; c.fillRect(x, t + 3, 1, Math.max(0, btm - t - 3));
+    c.fillStyle = (poly.style && poly.style.top) || m.polyTop || '#5cb85c'; c.fillRect(x, t, 1, 3);
+    c.fillStyle = (poly.style && poly.style.fill) || m.polyFill || m.floor; c.fillRect(x, t + 3, 1, Math.max(0, btm - t - 3));
     if (mask) for (let j = Math.max(0, t); j < Math.min(m.h, btm); j++) mask[j * m.w + x] = 1;
   }
 }
@@ -1268,6 +1548,11 @@ function pixelText(c, text, x, y, color) {
   }
 }
 const textWidth = (text) => [...text].reduce((s, ch) => s + (GLYPHS[ch] ? GLYPHS[ch][0].length + 1 : 2), -1);
+function bigTree(c, x, ground) {   // 公園の木（キャラより大きい）
+  c.fillStyle = LINE_COLOR; c.fillRect(x - 4, ground - 34, 8, 34);
+  c.fillStyle = '#7a5230'; c.fillRect(x - 3, ground - 34, 6, 34); c.fillStyle = '#5e3d21'; c.fillRect(x + 1, ground - 34, 2, 34);
+  disc(c, x, ground - 48, 22, (i, j, d) => (d > 20.6 ? LINE_COLOR : i + j < -12 ? '#7fd06a' : d > 15 && j > 4 ? '#3f8a3a' : '#4f9a3a'));
+}
 function tree(c, x, ground) {
   c.fillStyle = LINE_COLOR; c.fillRect(x - 2, ground - 10, 4, 10);
   c.fillStyle = '#7a5230'; c.fillRect(x - 1, ground - 10, 2, 10);
@@ -1445,6 +1730,7 @@ function buildMap(m) {
                               density: WATER_DENSITY, damp: 0.96 });
   for (const L of m.lava || []) liquids.push({ kind: 'lava', x: L.x * PX, y: L.y * PX, w: L.w * PX, h: L.h * PX, density: LAVA_DENSITY, damp: 0.9 });
   eruptTimer = 240;
+  resetTrain();
   endlessBest = 0;
   const T = 2000;   // 壁や地面の、見えない所までの厚さ（速い物がすりぬけないように）
   const opt = (plugin) => ({ isStatic: true, friction: 0.9, plugin });
@@ -1560,6 +1846,7 @@ function surfaceAt(x, y) {
 // opts.guard は、出てきてからしばらく（コマ数）空中でも立つ力を入れておく時間（着地で足から降りるように）。
 function makeChar(kind, x, y, opts = {}) {
   const ch = CHARS[kind];
+  const BODY = ch.body ? Object.assign({}, GLOBAL_BODY, ch.body) : GLOBAL_BODY;   // 力士は、胴体や手足が太い
   const tough = ch.tough || 1;
   const g = { kind, dead: false, cause: '', rise: 0, stun: 0, muscle: 1, guard: opts.guard || 0, touchStep: -99, held: 0, blood: 100,
               healCool: 0, wear: {}, facing: opts.facing || settings.facing || (Math.random() < 0.5 ? 1 : -1),
@@ -1659,7 +1946,8 @@ function updateMuscles(ts) {
       const s = MUSCLE[pl.kind] * (pl.kind === 'arm' ? 1 : support) * g.muscle * ts;
       if (s <= 0) continue;
       const av = Body.getAngularVelocity(p);
-      const goal = g.grip && pl.sprite === 'armF' ? -1.4 * g.facing : 0;   // 武器を持っている手は、前にのばす
+      const reach = (g.grip && pl.sprite === 'armF') || ((g.chasing || g.swing > 0) && (pl.sprite === 'armF' || pl.sprite === 'armB'));
+      const goal = reach ? -1.4 * g.facing : 0;   // 武器を持っている手や、おそうときの手は、前にのばす
       let next = av * (1 - 0.25 * s) - wrapAngle(p.angle - goal) * 0.2 * s;
       // 立つ力だけでは、MAX_SPIN より速くは回せない
       if (Math.abs(next) > MAX_SPIN && Math.abs(next) > Math.abs(av)) next = Math.sign(next) * Math.max(MAX_SPIN, Math.abs(av));
@@ -1704,11 +1992,12 @@ function updateJoints() {
 // 刃（や注射の針）なら「切る」、それ以外は「ぶつかる」。
 function contact(g, part, other, speed, at) {
   const op = other.plugin || {};
+  if (op.owner && op.owner.train && stepCount - (g.trainStep || -999) > 120) { g.trainStep = stepCount; SHOP.event('trainHit'); }
   if (op.needle && onEdge(other, at, op.needle)) { inject(g, at, op.needle.kind); return; }
   if (op.blade && (op.blade.all || onEdge(other, at, op.blade))) { cut(g, part, speed, at, op.blade); return; }
   if (op.owner && op.owner.T.bouncy) return;   // トランポリンはやわらかいので、ぶつかってもケガしない
   if (g.guard > 0 && other.isStatic) return;   // 出てきたばかりのキャラは、最初の着地ではケガしない
-  const vv = op.owner && op.owner.V ? Body.getVelocity(op.owner.body) : null;
+  const vv = op.owner && (op.owner.V || op.owner.train) ? Body.getVelocity(op.owner.body) : null;
   if (vv && Math.hypot(vv.x, vv.y) > 2 && speed > 3) {   // 走っているのりものにひかれると、倒れる
     speed *= VEHICLE_HIT;
     if (!g.dead) g.stun = Math.max(g.stun, 40 + speed * 6);
@@ -1863,7 +2152,7 @@ function kill(g, cause) {
   say(robot ? 'こわれた…' : '死んだ…', g.torso.position.x, g.torso.position.y - 80, '#ff4444');
   SND.play('death', 0.8, robot ? 0.6 : 1);
   g.rise = 0;
-  SHOP.event('kill');
+  if (!g.counted) { g.counted = true; SHOP.event('kill'); }   // 生き返ってまたたおしても、1体は1回だけ
   if (stepCount - (g.fallStep || -99) <= 2) SHOP.event('fallKill');
   if (SHOP.killCoins && !g.paid) {   // たおすとコインがもらえる（1体につき1回だけ。生き返らせても、もうもらえない）
     g.paid = true;
@@ -1922,11 +2211,12 @@ function inject(g, at, kind = 'heal') {
   g.injCool = 40;
   SND.play('click', 0.7);
   const hx = g.head.position.x, hy = g.head.position.y - 50;
-  if (kind === 'poison' && !g.dead) { g.poison = 900; say('どく…', hx, hy, '#c07aff'); }
+  if (kind === 'poison' && !g.dead) { SHOP.event('poison'); g.poison = 900; say('どく…', hx, hy, '#c07aff'); }
   else if (kind === 'sleep' && !g.dead) { g.stun = 900; say('ぐー…', hx, hy, '#7ab8ff'); }
   else if (kind === 'draw' && !g.dead) { g.blood = Math.max(0, g.blood - 60); bleed(g, at.x, at.y, 14); say('ちがぬけた…', hx, hy, '#ff6060'); }
-  else if (kind === 'zombie' && g.kind !== 'zombie' && !CHARS[g.kind].sparks) {
-    g.kind = 'zombie';
+  else if (kind === 'zombie' && !CHARS[g.kind].undead) {
+    if (!SHOP.owns('zombie')) { say('ゾンビを ショップで買うと、使えるよ', hx, hy, '#ffffff'); return; }   // ゾンビの注射で、ショップのゾンビを、ただで手に入れられないようにする
+    g.kind = CHARS[g.kind].zombieOf || 'zombie';
     if (g.dead && !g.head.plugin.detached) rise(g); else say('ゾンビになった！', hx, hy, '#9dff8a');
   }
 }
@@ -1937,6 +2227,7 @@ function ignite(g) {
   const already = g.fire > 0;
   g.fire = FIRE_TIME;
   if (already) return;
+  SHOP.event('burn');
   SND.play('sizzle', 0.8);
   if (!g.dead) sayFor(g, CHARS[g.kind].sparks ? 'ジュッ' : 'あちっ！', g.head.position.x, g.head.position.y - 40);
 }
@@ -1972,6 +2263,97 @@ function firebomb(x, y, power) {
   scorch(x, y, Math.round(R / PX * 0.3));
   SND.play('boom', 0.4);
   SND.play('sizzle', 0.9);
+}
+
+
+// ---- キャラの行動：うろうろあるく、ほかのキャラをおそう ----
+// CHARS の behavior が 'wander' なら、ときどき向きを変えて、うろうろあるく。'attack' なら、ちかくのほかのキャラを見つけて、おいかけて、
+// 手のとどく所まで来たら、こうげきする（かみつく・なぐる）。speed はあるくはやさ、power はこうげきの強さ。
+// 立っているときだけ、うごく（ころんだら、たおれたまま）。ゾンビ（undead）どうしは、おそいあわない。ゾンビにころされたキャラは、ゾンビになる
+const SIGHT = 140 * PX, REACH = 24 * PX, ATTACK_COOL = 55;
+const isFriend = (a, b) => a.kind === b.kind || (CHARS[a.kind].undead && CHARS[b.kind].undead);
+// 体ごと、左右をひっくりかえす（うしろ向きに歩かないように）。部品の場所・かたむき・関節の位置を、胴体をとおるたての線で、鏡うつしにする
+function turnAround(g) {
+  if (g.grip || g.seat || g.held > 0 || stepCount - (g.turnStep || -999) < 45) return;
+  g.turnStep = stepCount;
+  const cx = g.torso.position.x;
+  for (const p of g.parts) {
+    const v = Body.getVelocity(p), w = Body.getAngularVelocity(p);
+    Body.setPosition(p, { x: 2 * cx - p.position.x, y: p.position.y }, false);
+    Body.setAngle(p, -p.angle, false);
+    Body.setVelocity(p, { x: -v.x, y: v.y });
+    Body.setAngularVelocity(p, -w);
+  }
+  for (const c of g.joints) { c.pointA.x = -c.pointA.x; c.pointB.x = -c.pointB.x; }
+  g.facing = -g.facing;
+}
+function nearestTarget(g) {
+  let best = null, bestD = SIGHT;
+  for (const o of chars) {
+    if (o === g || o.dead || isFriend(g, o) || o.seat) continue;
+    const dx = o.torso.position.x - g.torso.position.x, dy = o.torso.position.y - g.torso.position.y;
+    if (Math.abs(dy) > 70 * PX) continue;
+    const d = Math.abs(dx);
+    if (d < bestD) { best = o; bestD = d; }
+  }
+  return best;
+}
+function attackChar(g, t, only) {   // only はテスト用：この種類の部品をねらう
+  const ch = CHARS[g.kind], at = handPoint(g);
+  let part = null, bd = Infinity;
+  for (const p of t.parts) {
+    if (p.plugin.detached || (only && p.plugin.kind !== only)) continue;
+    const d = Math.hypot(p.position.x - at.x, p.position.y - at.y);
+    if (d < bd) { bd = d; part = p; }
+  }
+  if (!part) return;
+  g.swing = 22;
+  g.atkCool = ATTACK_COOL;
+  const dir = Math.sign(t.torso.position.x - g.torso.position.x) || g.facing;
+  const dmg = 16 * (ch.power || 1) * settings.damage;
+  part.plugin.bleed += 0.4;
+  Body.setVelocity(t.torso, { x: dir * (3 + (ch.power || 1) * 1.5), y: -2 });
+  SND.play(CHARS[t.kind].sparks ? 'metal' : 'squish', 0.8);
+  const before = t.dead;
+  hurtPart(t, part, dmg, part.position, 5, 'cut');
+  if (!before && t.dead && ch.undead && !CHARS[t.kind].sparks && !CHARS[t.kind].undead) {   // ゾンビにころされたキャラは、しばらくすると、ゾンビになって起き上がる
+    t.kind = CHARS[t.kind].zombieOf || 'zombie';
+    t.rise = RISE_TIME - 150;
+    say('ゾンビに なる…', t.head.position.x, t.head.position.y - 50, '#9dff8a');
+  }
+}
+function updateAI(ts) {
+  for (const g of chars) {
+    if (g.swing > 0) g.swing -= ts;
+    if (g.atkCool > 0) g.atkCool -= ts;
+    g.chasing = false;
+    const ch = CHARS[g.kind], mode = ch.behavior;
+    if (!mode || mode === 'still' || g.dead || g.stun > 0 || g.seat || g.held > 0) continue;
+    if (stepCount - g.touchStep > 3 || g.muscle < 0.5) continue;   // 地面に立っているときだけ
+    const speed = 0.4 + (ch.speed || 2) * 0.5;
+    let dir = 0, face = 0;
+    if (mode === 'attack') {
+      const t = nearestTarget(g);
+      if (t) {
+        const dx = t.torso.position.x - g.torso.position.x;
+        face = Math.sign(dx) || g.facing;
+        g.chasing = true;
+        if (Math.abs(dx) > REACH * 0.7) dir = face;
+        else if (!(g.atkCool > 0)) attackChar(g, t);
+      }
+    } else {   // wander
+      if (!g.wander || g.wander.until <= stepCount) g.wander = { dir: [-1, 0, 1, 1, -1][Math.floor(Math.random() * 5)], until: stepCount + 90 + Math.floor(Math.random() * 150) };
+      dir = face = g.wander.dir;
+    }
+    if (face && face !== g.facing) turnAround(g);
+    if (dir && dir === g.facing) {
+      for (const p of g.parts) {
+        if (p.plugin.detached) continue;
+        const v = Body.getVelocity(p);
+        Body.setVelocity(p, { x: v.x + (dir * speed - v.x) * 0.25, y: v.y });
+      }
+    }
+  }
 }
 
 // 出血・ケガの回復・出血で死ぬ
@@ -2115,6 +2497,20 @@ const THINGS = {
   ironball: { tab: 'things', name: '鉄球', sprite: 'ironball', circle: 6, density: 0.02, layer: 0, mat: 'metal' },
   stone:    { tab: 'things', name: 'いし', sprite: 'stone', rects: [[0, 0, 12, 9]], density: 0.012, layer: 0, mat: 'metal' },
   anvil:    { tab: 'things', name: 'かなとこ', sprite: 'anvil', rects: [[0, 0, 16, 3], [3, 3, 10, 3], [1, 6, 14, 3]], density: 0.03, layer: 0, mat: 'metal' },
+  club:     { tab: 'weapons', name: 'こんぼう', sprite: 'club', rects: [[0, 2, 10, 2, 0.001], [10, 0, 12, 6, 0.006]], layer: 2, mat: 'wood' },
+  sword:    { tab: 'weapons', name: 'ロングソード', sprite: 'sword', rects: [[0, 1, 30, 3]], density: 0.0016, layer: 2, mat: 'metal',
+              blade: { from: -9, sharp: 1.8 }, stick: 16 },
+  sledge:   { tab: 'weapons', name: '大ハンマー', sprite: 'sledge', rects: [[0, 4, 20, 2, 0.002], [20, 0, 8, 10, 0.022]], layer: 2, mat: 'metal' },
+  sniper:   { tab: 'guns', name: 'スナイパー', sprite: 'sniper', rects: [[0, 1, 34, 2], [0, 3, 12, 2]], density: 0.003, layer: 2, mat: 'metal',
+              gun: { muzzle: [34, 2], power: 70, recoil: 9, sound: 'bang' } },
+  flame:    { tab: 'guns', name: 'かえんほうしゃき', sprite: 'flame', rects: [[0, 0, 8, 8], [8, 2, 14, 3]], density: 0.003, layer: 2, mat: 'metal',
+              gun: { muzzle: [22, 3.5], power: 0, ignite: true, range: 55 * PX, recoil: 0.3, sound: 'sizzle', auto: true, every: 4, spread: 0.12 } },
+  landmine: { tab: 'bombs', name: 'じらい', sprite: 'mine', rects: [[0, 0, 12, 4]], density: 0.004, layer: 0, mat: 'metal',
+              bomb: { fuse: 25, power: 1.1, prox: 26 } },
+  bowling:  { tab: 'things', name: 'ボーリングのたま', sprite: 'bowling', circle: 4.5, density: 0.02, layer: 0, mat: 'metal' },
+  tire:     { tab: 'things', name: 'タイヤ', sprite: 'tire', circle: 6, density: 0.001, restitution: 0.7, layer: 0, mat: 'rubber' },
+  tv:       { tab: 'things', name: 'テレビ', sprite: 'tv', rects: [[0, 2, 14, 9]], density: 0.003, layer: 0, mat: 'metal' },
+  dumbbell: { tab: 'things', name: 'ダンベル', sprite: 'dumbbell', rects: [[0, 0, 6, 8], [6, 3, 10, 2], [16, 0, 6, 8]], density: 0.02, layer: 0, mat: 'metal' },
   syringe:  { tab: 'syringes', name: '回復の注射', sprite: 'syringe', rects: [[0, 0, 14, 3]], density: 0.002, layer: 2, mat: 'metal',
               needle: 4 },
   syringePoison: { tab: 'syringes', name: 'どくの注射', sprite: 'syringePoison', rects: [[0, 0, 14, 3]], density: 0.002, layer: 2, mat: 'metal',
@@ -2221,7 +2617,9 @@ function makeVehicle(id, x, y, facing = 1) {
 function wear(g, id) {
   const C = CLOTHES[id];
   if (!C) return false;
+  if (CHARS[g.kind].noClothes) { say('ふとっていて 着られない', g.head.position.x, g.head.position.y - 50, '#ffffff', true); return false; }
   g.wear[C.slot] = id;
+  SHOP.event('wear');
   SND.play('click', 0.7);
   return true;
 }
@@ -2238,13 +2636,42 @@ const canEquip = (id) => {
   const T = THINGS[id];
   return !!T && !T.vehicle && !T.hidden && (T.tab === 'weapons' || T.tab === 'guns' || !!T.gun || !!T.blade) && !SHOP.locked(id);
 };
+// 手に持っている武器は、手にがっちり固定して、向きも変えない（手の角度から、いつも同じだけ前にかたむける）
+function updateGrips() {
+  for (const g of chars) {
+    const gr = g.grip;
+    if (!gr) continue;
+    const b = gr.ent.body, h = gr.hand;
+    const ang = h.angle + gr.rel;
+    const at = Vector.add(h.position, Vector.rotate({ x: 0, y: BODY.arm[1] / 2 * PX }, h.angle));
+    Body.setAngle(b, ang);
+    Body.setPosition(b, Vector.sub(at, Vector.rotate(gr.local, ang)));
+    Body.setVelocity(b, Body.getVelocity(h));
+    Body.setAngularVelocity(b, Body.getAngularVelocity(h));
+  }
+}
 function unequip(g) {
   const gr = g.grip;
   if (!gr) return;
   g.grip = null;
   gr.ent.gripped = null;
-  Composite.remove(gr.ent.comp, gr.c);
-  gr.ent.body.parts.forEach((q, i) => { q.collisionFilter.group = gr.groups[i]; });
+  gr.ent.body.parts.forEach((q, i) => { q.collisionFilter = gr.filters[i]; });
+}
+// 武器のさがしかた：手の先から、この長さ（世界の長さ）いないにある、ころがっている武器のうち、いちばん近いもの
+const GRIP_REACH = 30 * PX;
+function handPoint(g) {
+  const hand = g.parts.find((p) => p.plugin.seg === 'armL' && p.plugin.sprite === 'armF');
+  return hand ? Vector.add(hand.position, Vector.rotate({ x: 0, y: BODY.arm[1] / 2 * PX }, hand.angle)) : g.torso.position;
+}
+function nearestWeapon(g) {
+  const at = handPoint(g);
+  let best = null, bestD = GRIP_REACH;
+  for (const o of objects) {
+    if (o.gripped || o.stuck || !canEquip(o.id)) continue;
+    const d = Math.hypot(o.body.position.x - at.x, o.body.position.y - at.y);
+    if (d < bestD) { best = o; bestD = d; }
+  }
+  return best;
 }
 function equip(g, id) {
   unequip(g);
@@ -2254,16 +2681,102 @@ function equip(g, id) {
   const ent = makeThing(id, at.x, at.y, g.facing);
   const [gx, gy] = ent.T.grip || [Math.min(3, ent.sprite.width / 2), ent.sprite.height / 2];
   Body.translate(ent.body, Vector.sub(at, thingPoint(ent, gx, gy)));
-  const c = Constraint.create({ bodyA: hand, pointA: { x: 0, y: BODY.arm[1] / 2 * PX }, bodyB: ent.body,
-                                pointB: Vector.rotate(Vector.sub(at, ent.body.position), -ent.body.angle), length: 0, stiffness: 0.9, damping: 0.1 });
-  const groups = ent.body.parts.map((q) => q.collisionFilter.group);
-  ent.body.parts.forEach((q) => { q.collisionFilter.group = g.group; });
-  Composite.add(ent.comp, c);
-  g.grip = { ent, c, hand, groups };
+  // 手に持っている武器は、updateGrips が毎コマ、手の先へ動かす（つなぐバネは使わない。地面にめりこんだ武器が手を引っぱって、暴れるため）。
+  // 地面や、ころがっている物とは、ぶつからない。キャラ（と、のりもの）には当たるが、持ち主の体には当たらない
+  const filters = ent.body.parts.map((q) => q.collisionFilter);
+  ent.body.parts.forEach((q) => { q.collisionFilter = { group: g.group, category: CAT_VEH, mask: CAT_BODY | CAT_VEH }; });
+  g.grip = { ent, hand, filters, local: Vector.rotate(Vector.sub(at, ent.body.position), -ent.body.angle), rel: 1.4 * g.facing };
   ent.gripped = g;
   return ent;
 }
 
+
+// ---- 電車（駅のマップ） ----
+// ときどき電車が来る：はじめに「電車がくるよ！」と知らせて、すこしあとに走ってくる（どちらの向きから来るかは、ランダム）。
+// 電車は、地面や壁をすりぬけて走り、キャラや物にぶつかると、はねとばす。2回に1回は、ホームの高さを走って、ホームに突っ込んでくる。
+const TRAIN_W = 240, TRAIN_H = 78, TRAIN_SPEED = 26;
+let trainTimer = 700, trainState = 0, trainEnt = null, trainDir = 1, trainMode = 0;   // state: 0 まっている、1 知らせている、2 走っている
+function trainSprite() {
+  const c = document.createElement('canvas');
+  c.width = TRAIN_W; c.height = TRAIN_H;
+  const x = c.getContext('2d');
+  const f = (col, xx, yy, ww, hh) => { x.fillStyle = col; x.fillRect(xx, yy, ww, hh); };
+  f(LINE_COLOR, 0, 2, TRAIN_W, 68);                 // ふち
+  f('#d5dbe1', 1, 3, TRAIN_W - 2, 66);              // 車体
+  f('#9aa5b0', 1, 3, TRAIN_W - 2, 5);               // 屋根
+  f('#2a6fd0', 1, 46, TRAIN_W - 2, 6);              // 青い線
+  f('#1a4a96', 1, 52, TRAIN_W - 2, 2);
+  for (let i = 0; i < 9; i++) {                     // まど（3つごとに、とびら）
+    const wx = 8 + i * 25;
+    f(LINE_COLOR, wx - 1, 13, 20, 26);
+    f('#2d3a4f', wx, 14, 18, 24);
+    f('#5f7aa0', wx + 1, 15, 6, 10);
+    if (i % 3 === 1) { f('#b0bac4', wx - 4, 10, 2, 44); f('#b0bac4', wx + 20, 10, 2, 44); }
+  }
+  f('#ffe070', TRAIN_W - 7, 40, 5, 7);              // ライト
+  f('#e23b3b', 2, 40, 3, 7);
+  f(LINE_COLOR, 0, 70, TRAIN_W, 8);                 // 台車と車輪
+  for (const wx of [20, 34, 200, 214]) { f('#3a3f47', wx, 70, 10, 8); f('#c9d0d6', wx + 4, 73, 2, 2); }
+  return c;
+}
+OBJ_SPRITES.train = trainSprite();
+THINGS.train = { tab: 'hidden', hidden: true, name: '電車', sprite: 'train', rects: [[0, 0, TRAIN_W, TRAIN_H]], density: 0.01, layer: 0, mat: 'metal', train: true };
+function resetTrain() { trainTimer = rand(600, 1100); trainState = 0; trainEnt = null; }
+function callTrain(mode, dir) {
+  const m = currentMap;
+  if (!m.train || trainEnt) return null;
+  trainDir = dir || (Math.random() < 0.5 ? 1 : -1);
+  trainMode = mode == null ? (Math.random() < 0.5 ? 0 : 1) : mode;
+  const y = ((trainMode ? m.train.platY : m.train.y) - TRAIN_H / 2) * PX;
+  const x = trainDir > 0 ? -TRAIN_W * PX : worldX1 + TRAIN_W * PX;
+  const ent = makeThing('train', x, y, trainDir);
+  ent.train = true;
+  ent.trainY = y;
+  ent.body.collisionFilter = { group: 0, category: CAT_VEH, mask: CAT_BODY | CAT_VEH };   // 地面や壁とは、ぶつからない（すりぬける）。キャラとのりものには、ぶつかる
+  Body.setMass(ent.body, 6000);
+  Body.setInertia(ent.body, Infinity);
+  trainEnt = ent;
+  trainState = 2;
+  SND.play('engineStart', 1);
+  if (trainMode) say('暴走電車！', cam.x + W / cam.z / 2, cam.y + H / cam.z * 0.25, '#ff4444');
+  return ent;
+}
+function updateTrain(ts) {
+  if (!currentMap.train) return;
+  if (trainEnt && !objects.includes(trainEnt)) { trainEnt = null; trainState = 0; trainTimer = rand(900, 1800); }
+  if (trainState === 0) {
+    if ((trainTimer -= ts) <= 0) {
+      trainState = 1;
+      trainTimer = 150;
+      trainDir = Math.random() < 0.5 ? 1 : -1;
+      trainMode = Math.random() < 0.5 ? 0 : 1;
+      say('⚠ 電車が くるよ！', cam.x + W / cam.z / 2, cam.y + H / cam.z * 0.25, '#ffd24a');
+    }
+  } else if (trainState === 1) {
+    if (stepCount % 25 === 0) SND.play('click', 0.6);
+    if ((trainTimer -= ts) <= 0) callTrain(trainMode, trainDir);
+  } else if (trainEnt) shake = Math.max(shake, 3);
+}
+// 物理の計算のあと：電車は、まっすぐ、同じ速さで走らせる（重力や、ぶつかった反動で、かたむいたり、おそくなったりしない）
+function holdTrain() {
+  if (!trainEnt) return;
+  const b = trainEnt.body;
+  Body.setAngle(b, 0);
+  Body.setAngularVelocity(b, 0);
+  Body.setPosition(b, { x: b.position.x, y: trainEnt.trainY });
+  Body.setVelocity(b, { x: trainDir * TRAIN_SPEED, y: 0 });
+  for (const o of objects) {   // 電車の通り道にある物（のりもの以外）は、はねとばす
+    if (o === trainEnt || o.riders || Math.abs(o.body.position.x - b.position.x) > TRAIN_W / 2 * PX + 40 || Math.abs(o.body.position.y - b.position.y) > TRAIN_H / 2 * PX + 40) continue;
+    Body.setVelocity(o.body, { x: trainDir * TRAIN_SPEED * 1.1, y: -8 });
+    Body.setAngularVelocity(o.body, rand(-0.3, 0.3));
+  }
+  if ((trainDir > 0 && b.position.x > worldX1 + TRAIN_W * PX) || (trainDir < 0 && b.position.x < -TRAIN_W * PX)) {
+    removeThing(trainEnt);
+    trainEnt = null;
+    trainState = 0;
+    trainTimer = rand(900, 1800);
+  }
+}
 function removeThing(ent) {
   if (ent.gripped) { ent.gripped.grip = null; ent.gripped = null; }
   if (ent.riders) for (const g of ent.riders) if (g) unboard(g);
@@ -2274,6 +2787,7 @@ function removeThing(ent) {
   if (i >= 0) objects.splice(i, 1);
 }
 function removeChar(g) {
+  if (infoChar === g) closeInfo();
   unequip(g);
   closePetMenu();
   unboard(g);
@@ -2343,6 +2857,17 @@ function fire(ent, spread = 0) {
   for (let k = 0; k < (G.pellets || 1); k++) {   // ショットガンは、1回でたくさんの弾がちらばって飛ぶ
     const pa = a + (G.pellets ? rand(-G.spread, G.spread) : 0);
     const pd = { x: Math.cos(pa) * f, y: Math.sin(pa) * f };
+    if (G.ignite) {   // 火炎放射：短いきょりの火。当たったキャラに火がつく
+      const hit = raycast(mz, pd, G.range, ent);
+      for (let i = 0; i < 5; i++) {
+        const sp = rand(5, 12);
+        addFx({ x: mz.x + pd.x * rand(0, 40), y: mz.y + pd.y * rand(0, 40), vx: pd.x * sp + rand(-1, 1), vy: pd.y * sp + rand(-1.5, 0.5), g: -0.03, drag: 0.93,
+                life: rand(12, 26), size: PX * rand(1.5, 3), colors: ['#fff3b0', '#ffd24a', '#ff8a1f', '#e8501a'] });
+      }
+      const hg = hit && hit.body.plugin && hit.body.plugin.grape;
+      if (hg) ignite(hg);
+      continue;
+    }
     const hitInfo = raycast(mz, pd, 5000, ent);
     const end = hitInfo ? hitInfo.point : Vector.add(mz, Vector.mult(pd, 5000));
     tracers.push({ x1: mz.x, y1: mz.y, x2: end.x, y2: end.y, life: 5 });
@@ -2535,6 +3060,10 @@ function updateThings(ts) {
       ent.cool -= ts;
       if (ent.cool <= 0) { ent.cool += T.gun.every; fire(ent, rand(-T.gun.spread, T.gun.spread)); }
     }
+    if (T.bomb && T.bomb.prox && !ent.lit) {   // じらい：キャラが近づくと、火がつく
+      const R = T.bomb.prox * PX;
+      if (chars.some((g) => g.parts.some((p) => Math.hypot(p.position.x - ent.body.position.x, p.position.y - ent.body.position.y) < R))) light(ent, T.bomb.fuse);
+    }
     if (ent.lit) {
       ent.fuse -= ts;
       if (T.bomb.tip && Math.random() < 0.6 * ts) {
@@ -2600,7 +3129,7 @@ function updateLiquids(ts) {
     if (pl.wet !== L) {
       pl.wet = L;
       if (L.kind === 'lava') { if (v.y > 1) sizzle(p.x, L.y); }
-      else if (v.y > 3) splash(p.x, L.y, v.y);
+      else if (v.y > 3) splash(p.x, L.y, v.y, g);
     }
     const damp = Math.pow(L.damp, ts);
     b.force.y -= L.density * b.area * gy;
@@ -2684,8 +3213,8 @@ function updateVolcano(ts) {
     say('噴火！', vx, vy - 120, '#ffb020');
   }
 }
-function splash(x, y, speed) {
-  SHOP.event('splash');
+function splash(x, y, speed, g) {
+  if (g && stepCount - (g.splashStep || -999) > 120) { g.splashStep = stepCount; SHOP.event('splash'); }   // 1回とびこむと、体の部品ごとに水にふれる。だから、キャラ1体につき、1回だけ数える
   const n = Math.min(24, Math.round(speed * 2));
   for (let i = 0; i < n; i++) {
     addFx({ x: x + rand(-12, 12), y, vx: rand(-3, 3), vy: -rand(2, 4 + speed * 0.5), g: 0.3, drag: 0.99, life: rand(20, 40),
@@ -3121,7 +3650,7 @@ function drawChar(g) {
     const burn = Math.min(3, Math.round(pl.burn * 3));
     const name = pl.kind === 'head' ? 'head_' + face : pl.sprite;
     const key = pl.kind === 'head' ? 'head' : pl.sprite;
-    const [ax, ay] = ANCHOR[key];
+    const [ax, ay] = (CHARS[g.kind].anchor && CHARS[g.kind].anchor[key]) || ANCHOR[key];
     const layers = worn.filter((L) => L.key === key && (!L.seg || L.seg === pl.seg));
     for (const L of layers) if (L.under) drawSprite(p, L.img, ax - L.ox, ay - L.oy, g.facing);
     drawSprite(p, getSprite(g.kind, name, level, burn), ax, ay, g.facing);
@@ -3293,7 +3822,10 @@ function step() {
   updateMuscles(ts);
   updateRiders(ts);
   updateHeld();
+  updateGrips();
+  updateAI(ts);
   updateThings(ts);
+  updateTrain(ts);
   updateShells(ts);
   updateStuck(ts);
   updateLiquids(ts);
@@ -3301,6 +3833,7 @@ function step() {
   updateBalloons(ts);
   updateChunks();
   Engine.update(engine, STEP);
+  holdTrain();
   updateJoints();
   applyBounces();
   stepCount++;
@@ -3336,6 +3869,7 @@ function frame(t) {
     if (n === 3) acc = 0;   // 重くて追いつかないときは、あきらめて先に進む
   } else SND.engine(0);
   render();
+  updateGripUI();
   updateStats();
 }
 
@@ -3362,7 +3896,7 @@ function pickAt(pt, slop) {
   }
   for (let i = objects.length - 1; i >= 0; i--) if (objects[i].layer === 0) order.push(...objects[i].bodies);
   order.push(...hidden);
-  const find = (q) => order.find((b) => bodyContains(b, q)) || null;
+  const find = (q) => order.find((b) => !(b.plugin.owner && b.plugin.owner.train) && bodyContains(b, q)) || null;
   let found = find(pt);
   for (const r of [slop / 2, slop]) {
     for (let k = 0; k < 8 && !found; k++) {
@@ -3374,18 +3908,20 @@ function pickAt(pt, slop) {
 }
 
 function grab(p, b, pt) {
+  const hand = isHand(b);   // 手をつかむだけでは、体を持ち上げない（足でバランスをとったまま、手だけが動く）
   const c = Constraint.create({ pointA: { x: pt.x, y: pt.y }, bodyB: b, pointB: { x: pt.x - b.position.x, y: pt.y - b.position.y },
-                                length: 0, stiffness: 0.2, damping: 0.1 });
+                                length: 0, stiffness: hand ? 0.06 : 0.2, damping: 0.1 });
+  c.handOnly = hand;
   Composite.add(world, c);
   p.grab = c;
   const g = b.plugin && b.plugin.grape;
-  if (g) { unboard(g); g.held++; setVehicleCollide(g, false); g.noVeh = 1; }   // 持っている間は、のりものをすりぬける
+  if (g && !hand) { unboard(g); g.held++; setVehicleCollide(g, false); g.noVeh = 1; }   // 持っている間は、のりものをすりぬける
 }
 function dropGrab(p) {
   if (!p.grab) return;
   Composite.remove(world, p.grab);
   const g = p.grab.bodyB.plugin && p.grab.bodyB.plugin.grape;
-  if (g) g.held = Math.max(0, g.held - 1);
+  if (g && !p.grab.handOnly) g.held = Math.max(0, g.held - 1);
   p.grab = null;
 }
 function releaseGrabsOn(bodies) {
@@ -3466,8 +4002,14 @@ function onPointerDown(e) {
       if (pt.x > bb.min.x - near && pt.x < bb.max.x + near && pt.y > bb.min.y - near && pt.y < bb.max.y + near) { b = h.grab.bodyB; break; }
     }
   }
+  if (b && b.plugin.owner && b.plugin.owner.gripped) {   // 手に持っている武器の、にぎっている所をつかんだら、武器ではなく手をつかむ
+    const g = b.plugin.owner.gripped, at = handPoint(g);
+    if (Math.hypot(pt.x - at.x, pt.y - at.y) < 8 * PX) b = g.grip.hand;
+  }
   if (b) grab(p, b, pt);
   closePetMenu();
+  if (isHand(b)) showGripUI(b.plugin.grape);
+  else if (gripUI && gripUI.until && b) gripUI = null;
   resetCamGesture();
 }
 function onPointerMove(e) {
@@ -3494,6 +4036,7 @@ function onPointerUp(e) {
     const b = p.grab.bodyB;
     const tap = !p.moved && performance.now() - p.t0 < 350;
     dropGrab(p);
+    if (gripUI && isHand(b)) gripUI.until = performance.now() + 4000;
     if (tap && b.plugin.owner) activate(b.plugin.owner, screenToWorld(e.clientX, e.clientY));
     else if (b.plugin.grape) {
       const g = b.plugin.grape, now = performance.now();
@@ -3553,7 +4096,8 @@ const TUTORIAL = [
   ['➕', 'キャラやアイテムを出す', '左上の ＋ を押すと、ひきだしが開くよ。上のタブ（キャラ・ぶき・じゅう…）は、横にすべらせて えらぼう。出したいものを右にスワイプすると、はなした所に出るよ。タップすると、あいている所に出るよ。ひきだしは ✕ で閉じるよ。'],
   ['✋', 'つかむ・なげる', 'キャラやものをさわって、ドラッグ。すばやくはなすと、なげられるよ。持った物は、下を向いてぶら下がるよ。2本の指で持つと、向きを決められるよ。'],
   ['👆', 'タップして つかう', '出した物を、タップしてみよう。じゅうは うつ、ばくだんは 火がつく、チェーンソーは 動く、ふうせんは われるよ。のりものは、タップで 走る・止まる。'],
-  ['👆👆', 'ダブルタップ', 'キャラをすばやく2回タップすると、小さいメニューが出るよ。ころす、生き返らせる、もやす、ぶきをもたせる が えらべるよ。ぶきを、キャラの上ではなしても、そのキャラが持つよ。'],
+  ['👆👆', 'ダブルタップ', 'キャラをすばやく2回タップすると、小さいメニューが出るよ。ころす、生き返らせる、もやす、ふくをきせる、ステータス（体力や血などが見られる）が えらべるよ。'],
+  ['✊', 'ぶきを持たせる', 'キャラの手（下のうで）をつかむと、「もつ」ボタンが出るよ。手のちかくにころがっている武器で、ボタンを押すと、手に固定されるよ。もう一度、手をつかんで「はなす」を押すと、はなれるよ。'],
   ['🚗', 'のりもの', 'キャラをつかんで、のりものの席の近くではなすと、乗るよ。のりものを タップすると、走りだすよ。乗っている人を つかんで引っぱると、おりるよ。'],
   ['💉', 'ちゅうしゃ', '「ちゅうしゃ」タブの針を、キャラに さしてみよう。みどりは 治す（頭があれば、死んでいても生き返る）、むらさきは どく、青は ねむる、こい緑は ゾンビになる、赤は ちが ぬけるよ。'],
   ['🔍', '画面を動かす', '何もない所を ドラッグすると、画面が動くよ。2本の指（マウスなら ホイール）で、アップ・ルーズ。右下の ルーズ・アップ ボタンでも できるよ。'],
@@ -3656,6 +4200,115 @@ byId('newsClose').addEventListener('click', closeNews);
 byId('newsOk').addEventListener('click', closeNews);
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeNews(); });
 
+
+// ---- キャラのステータス（ダブルタップのメニューの 📊）。画面の右がわに出して、そのキャラを見ながら、数字が変わるのも見られる ----
+const infoEl = byId('info');
+let infoChar = null, infoTimer = 0;
+const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+function charBase(kind) {
+  const ch = CHARS[kind];
+  return { tough: clamp(Math.ceil((ch.tough || 1) * 1.5), 1, 5), heavy: clamp(Math.round(ch.density / 0.001), 1, 5),
+           bleed: clamp(Math.round((ch.bleedRate == null ? 1 : ch.bleedRate) * 3), 1, 5) };
+}
+function renderInfo() {
+  const g = infoChar;
+  if (!g || !chars.includes(g)) { closeInfo(); return; }
+  const ch = CHARS[g.kind], base = charBase(g.kind);
+  byId('infoName').textContent = nameOf(g.kind);
+  const box = byId('infoBody');
+  box.textContent = '';
+  const row = (label, value, frac) => {
+    const r = document.createElement('div');
+    r.className = 'infoRow';
+    const l = document.createElement('span');
+    l.textContent = tr(label);
+    const v = document.createElement('b');
+    v.textContent = value;
+    r.append(l, v);
+    if (frac != null) {
+      const bar = document.createElement('i');
+      const f = document.createElement('u');
+      f.style.width = clamp(frac, 0, 1) * 100 + '%';
+      bar.append(f);
+      r.append(bar);
+    }
+    box.append(r);
+  };
+  const head = g.head.plugin, torso = g.torso.plugin;
+  const limbs = g.parts.filter((p) => (p.plugin.kind === 'arm' && p.plugin.seg === 'armU') || (p.plugin.kind === 'leg' && p.plugin.seg === 'legU'));
+  const limbsOn = limbs.filter((p) => !p.plugin.detached).length;
+  let cond = g.dead ? 'しんでいる' : g.stun > 0 ? 'きぜつ' : g.blood < BLOOD_WEAK || g.parts.some((p) => p.plugin.broken) ? 'けが' : 'げんき';
+  const flags = [];
+  if (g.fire > 0) flags.push('もえている');
+  if (g.poison > 0) flags.push('どく');
+  row('じょうたい', tr(cond) + (flags.length ? ' / ' + flags.map((f) => tr(f)).join(' ') : ''));
+  row('からだ', Math.max(0, Math.round(torso.hp)) + ' / ' + Math.round(torso.maxHp), torso.hp / torso.maxHp);
+  row('あたま', Math.max(0, Math.round(head.hp)) + ' / ' + Math.round(head.maxHp), head.hp / head.maxHp);
+  row(ch.sparks ? 'オイル' : 'ち', Math.max(0, Math.round(g.blood)) + '%', g.blood / 100);
+  row('手足', limbsOn + ' / 4');
+  row('ぶき', g.grip ? nameOf(g.grip.ent.id) : '−');
+  row('ふく', Object.keys(g.wear).length ? Object.values(g.wear).map((id) => nameOf(id)).join('、') : '−');
+  const sep = document.createElement('hr');
+  box.append(sep);
+  row('丈夫さ', stars(base.tough));
+  row('おもさ', stars(base.heavy));
+  row(ch.sparks ? 'オイルもれ' : 'ちの出やすさ', stars(base.bleed));
+  if (ch.undead) row('とくちょう', tr('死んでも起き上がる'));
+  if (ch.behavior && ch.behavior !== 'still') row('こうどう', tr(ch.behavior === 'attack' ? 'ほかのキャラをおそう' : 'うろうろあるく'));
+  if (ch.behavior === 'attack') row('こうげきの強さ', stars(clamp(Math.round((ch.power || 1) * 1.5), 1, 5)));
+  if (ch.note) { const n = document.createElement('p'); n.textContent = tr(ch.note); box.append(n); }
+}
+function openInfo(g) {
+  infoChar = g;
+  renderInfo();
+  infoEl.classList.remove('hidden');
+  clearInterval(infoTimer);
+  infoTimer = setInterval(renderInfo, 250);
+}
+function closeInfo() {
+  infoChar = null;
+  clearInterval(infoTimer);
+  infoEl.classList.add('hidden');
+}
+byId('infoClose').addEventListener('click', closeInfo);
+
+
+// ---- 手をつかむと出る「もつ／はなす」ボタン ----
+// キャラの手（下のうで）をつかむと、画面の下（まん中）にボタンが出る（はなしても、4秒のあいだ出ている）。
+// 「もつ」を押すと、手の近くにころがっている武器が、手に固定される。持っているときは「はなす」になって、押すと手からはなれる。
+const gripBtn = byId('gripBtn');
+let gripUI = null;   // { g, until }（until が 0 なら、まだ手をつかんでいる）
+const isHand = (b) => b && b.plugin && b.plugin.grape && b.plugin.kind === 'arm' && b.plugin.seg === 'armL';
+function showGripUI(g) { gripUI = { g, until: 0 }; }
+function updateGripUI() {
+  const now = performance.now();
+  if (gripUI && gripUI.until && now > gripUI.until) gripUI = null;
+  if (gripUI && (!chars.includes(gripUI.g) || view !== 'play')) gripUI = null;
+  gripBtn.classList.toggle('hidden', !gripUI);
+  if (!gripUI) return;
+  const g = gripUI.g;
+  const on = !!g.grip;
+  gripBtn.classList.toggle('on', on);
+  const label = tr(on ? '🖐 はなす' : '✊ もつ');
+  if (gripBtn.textContent !== label) gripBtn.textContent = label;
+}
+function pressGrip() {
+  if (!gripUI) return;
+  const g = gripUI.g;
+  if (g.dead) { say('しんでいるので もてない', g.head.position.x, g.head.position.y - 50, '#ffffff', true); return; }
+  if (g.grip) { unequip(g); SND.play('click', 0.7); }
+  else {
+    const o = nearestWeapon(g);
+    if (!o) { say('ちかくに ぶきがないよ', g.head.position.x, g.head.position.y - 50, '#ffffff', true); return; }
+    const id = o.id;
+    removeThing(o);
+    equip(g, id);
+    SND.play('click', 0.7);
+  }
+  if (gripUI) gripUI.until = performance.now() + 4000;
+}
+gripBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); pressGrip(); });
+
 // ---- ダブルタップで出る小さいメニュー（ころす・生き返らせる・もやす） ----
 const petMenu = byId('petMenu');
 let petPos = { x: 0, y: 0 };
@@ -3682,23 +4335,10 @@ function openPetMenu(g, sx, sy) {
     if (!g.dead) add('💀 ころす', 'kill', () => { g.stun = 0; kill(g, 'menu'); });
     else add('❤ 生き返らせる', 'revive', () => { g.healCool = 0; heal(g, at()); });
     add('🔥 もやす', 'burn', () => ignite(g));
-    if (!g.dead) add('⚔ ぶきをもたせる', 'give', give, true);
-    add('👕 ふくをきせる', 'dress', dress, true);
+    if (!CHARS[g.kind].noClothes) add('👕 ふくをきせる', 'dress', dress, true);
+    add('📊 ステータス', 'stats', () => openInfo(g));
     if (Object.keys(g.wear).length) add('👕 ふくをぬぐ', 'undress', () => { g.wear = {}; });
-    if (g.grip) add('✋ ぶきをすてる', 'drop', () => unequip(g));
     petMenu.classList.remove('hidden');
-    placePetMenu();
-  };
-  const give = () => {
-    petMenu.textContent = '';
-    petMenu.classList.add('give');
-    add('← もどる', 'back', main, true);
-    for (const it of ITEMS) {
-      if (!canEquip(it.id)) continue;
-      const b = add(nameOf(it.id), 'item', () => equip(g, it.id));
-      b.textContent = nameOf(it.id);
-      b.dataset.give = it.id;
-    }
     placePetMenu();
   };
   const dress = () => {
@@ -3717,7 +4357,7 @@ function openPetMenu(g, sx, sy) {
 
 // ---- アイテムのひきだし ----
 const TABS = [
-  { id: 'chars', name: 'キャラ', hint: 'スワイプして画面に出す。タップすると空いている所に出る。ぶきをキャラの上ではなすと、そのキャラが持つ。' },
+  { id: 'chars', name: 'キャラ', hint: 'スワイプして画面に出す。タップすると空いている所に出る。キャラの手をつかむと出る「もつ」ボタンで、ちかくの武器を持たせられる。' },
   { id: 'weapons', name: 'ぶき', hint: '刃のほうが当たると切れる。刃先からまっすぐ刺すと、刺さる（引っぱると抜ける）。持った物は下を向くので、2本の指で持って向きを決める。' },
   { id: 'guns', name: 'じゅう', hint: '出した銃をタップすると撃つ。マシンガンはもう一度タップすると止まる。ショットガンは、たくさんの弾が広がって飛ぶ。' },
   { id: 'bombs', name: 'ばくだん', hint: '出した爆弾をタップすると火がつく。ばくはつ樽は強くぶつけても爆発する。火炎びんは、割れると、まわりのキャラに火がつく。' },
@@ -4156,7 +4796,9 @@ renderMapNames();
 // （もう出ているキャラや物が、こまらないように）。
 const MOD_KEYS = '0123456789abcdfhijklmnoqrstuvwxz';   // モッドの色の番号を絵の文字にする（顔や体の文字とかぶらない文字だけ）
 const MOD_FACES = { fruit: FRUIT_FACES, robot: ROBOT_FACES, zombie: ZOMBIE_FACES, none: NO_FACES };
-const modRows = (m) => m.px.map((r) => [...r].map((ch) => (ch === '.' ? '.' : MOD_KEYS[MODS.IDX.indexOf(ch)])).join(''));
+const modPartRows = (px) => px.map((r) => [...r].map((ch) => (ch === '.' ? '.' : MOD_KEYS[MODS.IDX.indexOf(ch)])).join(''));
+const modRows = (m) => modPartRows(m.px);
+const hasPart = (px) => Array.isArray(px) && px.some((r) => /[^.]/.test(r));
 function modPal(m) {
   const pal = {};
   m.colors.forEach((c, i) => { pal[MOD_KEYS[i]] = c; });
@@ -4164,7 +4806,14 @@ function modPal(m) {
 }
 function modChar(m) {
   const rgb = [1, 3, 5].map((i) => parseInt(m.blood.slice(i, i + 2), 16)).join(', ');
+  // どう・うで・あしを描いていれば、それを使う（あしの絵は、ふとももと すね の りょうほうに使う）。かいていなければ、ふつうの形のまま
+  const hasTorso = hasPart(m.torsoPx), hasArm = hasPart(m.armPx), hasLeg = hasPart(m.legPx);
+  const build = (hasTorso || hasArm || hasLeg) ? {
+    torso: hasTorso ? modPartRows(m.torsoPx) : undefined, arm: hasArm ? modPartRows(m.armPx) : undefined,
+    legU: hasLeg ? modPartRows(m.legPx) : undefined, legL: hasLeg ? modPartRows(m.legPx) : undefined,
+  } : undefined;
   return { name: m.name, mod: true, head: modRows(m), faces: MOD_FACES[m.face] || FRUIT_FACES, tough: m.tough,
+           undead: m.undead, behavior: m.behavior, speed: m.speed, power: m.power, build,
            density: [0.0014, 0.002, 0.004][m.weight], sparks: m.sparks, bleedRate: m.sparks ? 0.5 : 1,
            blood: m.blood, stain: shadeColor(m.blood, -70), hurtTint: rgb,
            pal: Object.assign(modPal(m), CHAR_COMMON, { D: m.outline, P: m.skin, p: shadeColor(m.skin, -40), S: m.shirt,
@@ -4257,15 +4906,23 @@ window.GRAPE = {
   clearAll, clearLiving, clearCorpses, clearThings, clearDecals,
   petMenu: (i) => { const g = chars[i]; const s = worldToScreen(g.torso.position.x, g.torso.position.y); openPetMenu(g, s.x, s.y); },
   ignite: (i) => ignite(chars[i]),
+  bite: (i, j, only) => attackChar(chars[i], chars[j], only),
+  ai: (i) => ({ facing: chars[i].facing, chasing: !!chars[i].chasing, kind: chars[i].kind }),
+  callTrain: (mode, dir) => { const e = callTrain(mode, dir); return e ? objects.indexOf(e) : -1; },
+  trainState: () => ({ state: trainState, running: !!trainEnt, x: trainEnt ? Math.round(trainEnt.body.position.x) : null }),
   news: () => ({ open: !newsEl.classList.contains('hidden'), badge: !byId('newsBadge').classList.contains('hidden'), seen: settings.newsSeen,
                  entries: byId('newsList').querySelectorAll('.newsItem').length, fresh: byId('newsList').querySelectorAll('.newsNew').length }),
   checkNews,
   wear: (i, id) => wear(chars[i], id),
+  handScreen: (i) => { const h = handPoint(chars[i]); const p = worldToScreen(h.x, h.y); return { x: Math.round(p.x), y: Math.round(p.y - 12) }; },
+  gripUI: () => ({ shown: !gripBtn.classList.contains('hidden'), text: gripBtn.textContent }),
   worn: (i) => ({ ...chars[i].wear }),
+  info: () => ({ open: !infoEl.classList.contains('hidden'), name: byId('infoName').textContent, rows: byId('infoBody').querySelectorAll('.infoRow').length }),
+  openInfo: (i) => openInfo(chars[i]),
   tutorial: () => ({ open: !tutEl.classList.contains('hidden'), page: tutPage, pages: TUTORIAL.length }),
   equip: (i, id) => { const e = equip(chars[i], id); return e ? objects.indexOf(e) : -1; },
   unequip: (i) => unequip(chars[i]),
-  gripOf: (i) => { const gr = chars[i].grip; return gr ? { obj: objects.indexOf(gr.ent), handX: Math.round(gr.hand.position.x), handY: Math.round(gr.hand.position.y) } : null; },
+  gripOf: (i) => { const gr = chars[i].grip; return gr ? { obj: objects.indexOf(gr.ent), handX: Math.round(gr.hand.position.x), handY: Math.round(gr.hand.position.y), rel: +(gr.ent.body.angle - gr.hand.angle).toFixed(2) } : null; },
   inject: (i, kind) => inject(chars[i], chars[i].head.position, kind),
   startMap: (i) => startMap(typeof i === 'string' ? MAPS.find((m) => m.id === i) : MAPS[i]),
   maps: () => MAPS.map((m) => ({ id: m.id, name: m.name, w: m.w * PX, h: m.h * PX, start: m.start * PX })),

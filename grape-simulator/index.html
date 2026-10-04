@@ -32,6 +32,21 @@
   #hudRight { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; }
   #zoomBtns { position: fixed; right: 10px; bottom: 14px; display: flex; gap: 8px; }
   #zoomBtns .hudbtn { width: auto; padding: 0 14px; font-size: 18px; font-weight: bold; }
+  #gripBtn { position: fixed; z-index: 6; left: 50%; bottom: 22px; transform: translateX(-50%); padding: 12px 26px; font-size: 20px; font-weight: bold; border: 3px solid #000; border-radius: 30px;
+             background: #fff; color: #222; cursor: pointer; box-shadow: 0 4px 0 #000; font-family: inherit; touch-action: manipulation; }
+  #gripBtn.on { background: #6ccf5f; color: #10301a; }
+  #gripBtn:active { transform: translateX(-50%) translateY(3px); box-shadow: 0 1px 0 #000; }
+  /* キャラのステータス */
+  #info { position: fixed; right: 10px; top: 70px; z-index: 6; width: min(270px, 46vw); max-height: calc(100% - 140px); overflow-y: auto; box-sizing: border-box;
+          padding: 10px 12px; background: rgba(30, 20, 44, .93); color: #fff; border: 3px solid #000; border-radius: 12px; font-size: 14px; }
+  #info h3 { margin: 0 34px 6px 0; font-size: 18px; }
+  #infoClose { position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; font-size: 16px; }
+  .infoRow { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 2px 8px; padding: 2px 0; }
+  .infoRow b { font-weight: bold; }
+  .infoRow i { flex: 0 0 100%; height: 7px; background: #111; border-radius: 4px; overflow: hidden; }
+  .infoRow u { display: block; height: 100%; background: #6ccf5f; text-decoration: none; }
+  #info hr { border: 0; border-top: 2px solid #4a3a66; margin: 6px 0; }
+  #info p { margin: 6px 0 0; font-size: 13px; line-height: 1.5; opacity: .9; }
   /* あそびかた */
   #tutorial { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .65); }
   .tutBox { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(92vw, 560px);
@@ -196,7 +211,7 @@
   .edMain { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-start; }
   .edLeft { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   #edGrid { touch-action: none; border: 3px solid #000; background: #fff; cursor: crosshair; }
-  .tools, .palette { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 560px; }
+  .tools, .palette { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: min(920px, 96vw); }
   .tools button.on { background: #6ccf5f; }
   .swatch { width: 30px; height: 30px; padding: 0; border: 3px solid #000; border-radius: 6px; cursor: pointer; }
   .swatch.on { outline: 4px solid #ffd24a; outline-offset: 1px; }
@@ -280,6 +295,12 @@
 
 <div id="toast" class="hidden"></div>
 <div id="dialog" class="hidden"></div>
+<button id="gripBtn" class="hidden"></button>
+<div id="info" class="hidden">
+  <button id="infoClose" class="hudbtn" aria-label="とじる" data-i18n-aria>✕</button>
+  <h3 id="infoName"></h3>
+  <div id="infoBody"></div>
+</div>
 <div id="news" class="hidden">
   <div class="tutBox newsBox">
     <button id="newsClose" class="hudbtn" aria-label="とじる" data-i18n-aria>✕</button>
@@ -312,7 +333,7 @@
     <button id="btnHelp" class="small" data-i18n>❓ あそびかた</button>
     <button id="btnNews" class="small"><span data-i18n>📰 ニュース</span><b id="newsBadge" class="hidden">NEW</b></button>
   </div>
-  <p class="ver"><span data-i18n>ブラウザ版</span> 0.9</p>
+  <p class="ver"><span data-i18n>ブラウザ版</span> 1.0</p>
 </div>
 
 <div id="shop" class="screen hidden">

@@ -33,6 +33,14 @@ const GOODS = [
   { id: 'tank', price: 800, desc: '乗って走れる。砲台をタップすると大砲' },
   { id: 'trampoline', price: 80, desc: '上に落ちると、ボヨーンとはねる' },
   { id: 'balloon', price: 100, desc: 'ひもでつなぐと、うく。5こでキャラもうく' },
+  { id: 'sumo', price: 500, desc: 'おもくて、とてもじょうぶな力士' },
+  { id: 'robosumo', price: 900, desc: '注射も刃もきかない、鉄の力士' },
+  { id: 'watermelon', price: 150, desc: 'すこし丈夫な、すいかの人' },
+  { id: 'sword', price: 300, desc: '長くて、するどい。深く刺さる' },
+  { id: 'sledge', price: 250, desc: 'ものすごく重い。当たると大ダメージ' },
+  { id: 'sniper', price: 300, desc: 'まっすぐ遠くまで、強い弾' },
+  { id: 'flame', price: 450, desc: 'タップで火をふく。当たったキャラは燃える' },
+  { id: 'landmine', price: 200, desc: 'キャラが近づくと、ドカン' },
   { id: 'rainbow', price: 250, name: 'にじ色の血', desc: 'せっていで、血をにじ色にできる' },
 ];
 const PRICE = Object.fromEntries(GOODS.map((g) => [g.id, g.price]));
@@ -55,7 +63,7 @@ const QUESTS = [
   { id: 'lava10', text: '溶岩に10回落とす', ev: 'lava', n: 10, coins: 120 },
   { id: 'dist500', text: 'エンドレスで500m進む', ev: 'distance', n: 500, max: true, coins: 150 },
   { id: 'dist2000', text: 'エンドレスで2000m進む', ev: 'distance', n: 2000, max: true, coins: 500 },
-  { id: 'maps', text: 'ぜんぶのマップ（9つ）で遊ぶ', ev: 'map', n: 9, set: true, coins: 150 },
+  { id: 'maps', text: 'ぜんぶのマップ（12こ）で遊ぶ', ev: 'map', n: 12, set: true, coins: 150 },
   { id: 'multi5', text: '1回の爆発で5体いっぺんにたおす', ev: 'multiKill', n: 1, coins: 200 },
   { id: 'limbs', text: '1体の手足を4本ぜんぶとる', ev: 'allLimbs', n: 1, coins: 150 },
   { id: 'kill500', text: '500体たおす', ev: 'kill', n: 500, coins: 800 },
@@ -65,6 +73,10 @@ const QUESTS = [
   { id: 'sellMod', text: 'モッドを売りに出す', ev: 'sellMod', n: 1, coins: 30 },
   { id: 'modSold', text: '自分のモッドが売れる（お礼コードを読みこむ）', ev: 'modSold', n: 1, coins: 150 },
   { id: 'buyMod', text: '友だちのモッドを買う', ev: 'buyMod', n: 1, coins: 50 },
+  { id: 'burn10', text: 'キャラを10回もやす', ev: 'burn', n: 10, coins: 80 },
+  { id: 'wear10', text: 'ふくを10回着せる', ev: 'wear', n: 10, coins: 60 },
+  { id: 'poison10', text: 'どくの注射を10回さす', ev: 'poison', n: 10, coins: 80 },
+  { id: 'train10', text: '電車で10体はねとばす', ev: 'trainHit', n: 10, coins: 200 },
   { id: 'again100', text: '100体たおす', ev: 'kill', n: 100, coins: 100, repeat: true },
   { id: 'againBoom30', text: '爆発を30回おこす', ev: 'explode', n: 30, coins: 80, repeat: true },
   { id: 'againSever20', text: '手足を20本とる', ev: 'sever', n: 20, coins: 80, repeat: true },
@@ -93,7 +105,7 @@ const SALE_KEY = /^[a-z0-9]{8}:mod_[a-z0-9]{8}$/;
 // q はクエストの進みぐあい（今のクエストの分だけ。0.7 までのクエストは消す）、me はこのブラウザのプレイヤー、
 // bought は買ったモッド（作った人の番号:モッドの番号）、redeemed は使ったお礼コード、sales は自分のモッドが何こ売れたか、
 // receipts は買ったモッドのお礼コード（あとで、もう一度見られるように）
-const fresh = () => ({ v: 2, coins: START_COINS, owned: [], q: {}, me: { id: randomId(8), name: '' },
+const fresh = () => ({ v: 3, coins: START_COINS, owned: [], q: {}, me: { id: randomId(8), name: '' },
                        bought: [], redeemed: [], sales: {}, receipts: {} });
 const strings = (v, re, max) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string' && re.test(x)).slice(-max) : []);
 function load() {
@@ -111,9 +123,9 @@ function load() {
       if (SALE_KEY.test(k) && typeof c === 'string' && c.startsWith(PAY_PREFIX) && c.length < 2000) receipts[k] = c;
     }
   }
-  return { v: 2, coins: Math.max(0, Math.floor(Number(s.coins) || 0)),
+  return { v: 3, coins: Math.max(0, Math.floor(Number(s.coins) || 0)),
            owned: Array.isArray(s.owned) ? s.owned.filter((id) => PRICE[id]) : [],
-           q: s.q && typeof s.q === 'object' ? Object.fromEntries(Object.entries(s.q).filter(([id]) => QUESTS.some((q) => q.id === id))) : {},
+           q: s.v === 3 && s.q && typeof s.q === 'object' ? Object.fromEntries(Object.entries(s.q).filter(([id]) => QUESTS.some((q) => q.id === id))) : {},
            me: { id: PLAYER_ID.test(me.id) ? me.id : f.me.id, name: cleanName(me.name) },
            bought: strings(s.bought, SALE_KEY, 500), redeemed: strings(s.redeemed, RECEIPT_ID, 1000), sales, receipts };
 }
