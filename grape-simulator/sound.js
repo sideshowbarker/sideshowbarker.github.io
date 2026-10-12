@@ -60,6 +60,41 @@ function hiss(t, dur, peak, type, f0, f1, q, dest, attack = 0.002) {
 
 // ---- 効果音 ----  v は大きさ（0〜1くらい）、p は音の高さ（1がふつう）
 const SFX = {
+  // バクテリアの声：キチキチ・カチカチ（せかせかした、こまかい音）
+  bactChitter(t, v, p) {
+    let u = t;
+    for (let i = 0; i < 9; i++) {
+      u += 0.025 + Math.random() * 0.045;
+      hiss(u, 0.012, 0.5 * v, 'bandpass', (2200 + Math.random() * 1800) * p, 1200, 6, sfxBus, 0.001);
+      osc('square', (500 + Math.random() * 400) * p, 200, u, 0.01, 0.06 * v, sfxBus, 0.001);
+    }
+  },
+  // バクテリアのさけび声：ガサガサした、高い「キィィィ」が、ふるえながら下がる
+  bactScreech(t, v, p) {
+    for (const [d, k] of [[0, 1], [7, 0.8], [-11, 0.7]]) {
+      osc('sawtooth', (950 + d * 20) * p, (2600 + d * 30) * p, t, 0.18, 0.09 * v * k, sfxBus, 0.02);
+      osc('sawtooth', (2600 + d * 30) * p, (700 + d * 10) * p, t + 0.2, 0.75, 0.08 * v * k, sfxBus, 0.01);
+    }
+    for (let i = 0; i < 10; i++) osc('square', (1800 - i * 90) * p, (1500 - i * 80) * p, t + 0.1 + i * 0.08, 0.05, 0.035 * v, sfxBus, 0.005);
+    hiss(t, 1.0, 0.4 * v, 'bandpass', 3200 * p, 900, 3, sfxBus, 0.02);
+  },
+  // バクテリアのうなり声：ひくくて、ゴロゴロした声
+  bactGrowl(t, v, p) {
+    osc('sawtooth', 78 * p, 52 * p, t, 1.3, 0.16 * v, sfxBus, 0.15);
+    osc('sawtooth', 81 * p, 50 * p, t, 1.3, 0.12 * v, sfxBus, 0.15);
+    for (let i = 0; i < 6; i++) hiss(t + i * 0.2, 0.12, 0.18 * v, 'lowpass', 320 * p, 160, 1.2, sfxBus, 0.03);
+  },
+  // ノークリップ：「メリメリッ」と床がきしんで、こわれる音
+  meri(t, v) {
+    for (let i = 0; i < 6; i++) osc('sawtooth', 160 - i * 12 + Math.random() * 30, 70, t + i * 0.07, 0.08, 0.14 * v, sfxBus, 0.005);
+    for (let i = 0; i < 4; i++) hiss(t + 0.35 + i * 0.03, 0.03, 0.6 * v, 'highpass', 2000 + i * 500, 1200, 1, sfxBus, 0.001);
+    osc('sine', 70, 30, t + 0.38, 0.4, 0.4 * v, sfxBus, 0.005);
+  },
+  // 落ちるときの風と、バグったようなピコピコ音
+  fall(t, v) {
+    hiss(t, 1.8, 0.35 * v, 'bandpass', 300, 1600, 1.5, sfxBus, 0.3);
+    for (let i = 0; i < 14; i++) osc('square', 200 + Math.random() * 1800, 100 + Math.random() * 900, t + i * 0.11, 0.04, 0.04 * v, sfxBus, 0.002);
+  },
   thud(t, v, p) { hiss(t, 0.1, 0.35 * v, 'lowpass', 500 * p, 150, 0.7, sfxBus); osc('sine', 90 * p, 45, t, 0.12, 0.3 * v, sfxBus); },
   hit(t, v, p) { hiss(t, 0.12, 0.5 * v, 'lowpass', 900 * p, 200, 0.7, sfxBus); osc('sine', 140 * p, 55, t, 0.14, 0.45 * v, sfxBus); },
   squish(t, v, p) { hiss(t, 0.16, 0.45 * v, 'bandpass', 1400 * p, 350, 2.5, sfxBus); osc('sine', 300 * p, 120, t, 0.08, 0.18 * v, sfxBus); },

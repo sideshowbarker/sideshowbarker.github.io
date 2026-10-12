@@ -36,6 +36,56 @@
              background: #fff; color: #222; cursor: pointer; box-shadow: 0 4px 0 #000; font-family: inherit; touch-action: manipulation; }
   #gripBtn.on { background: #6ccf5f; color: #10301a; }
   #gripBtn:active { transform: translateX(-50%) translateY(3px); box-shadow: 0 1px 0 #000; }
+  /* 3D モード */
+  #v3d { position: fixed; inset: 0; z-index: 45; background: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
+  #v3canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+  #v3d .hudbtn { opacity: .9; }
+  #v3top { position: absolute; top: 10px; left: 10px; display: flex; gap: 8px; pointer-events: none; }
+  #v3top span { color: #fff; background: rgba(0,0,0,.5); padding: 5px 10px; border-radius: 8px; font-size: 17px; font-weight: bold; }
+  #v3top span:empty { display: none; }
+  #v3map { position: absolute; top: 10px; right: 64px; width: 120px; height: 120px; border: 3px solid rgba(0,0,0,.7); border-radius: 8px; pointer-events: none; }
+  #v3feed { position: absolute; top: 140px; right: 10px; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; pointer-events: none; }
+  #v3feed div { color: #fff; background: rgba(0,0,0,.5); padding: 3px 8px; border-radius: 6px; font-size: 13px; }
+  #v3exit { position: absolute; top: 10px; right: 10px; width: 44px; height: 44px; }
+  #v3fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+  #v3subs { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 46px; font-weight: bold; letter-spacing: 6px; pointer-events: none;
+            text-shadow: 3px 0 #ff00ff, -3px 0 #00ffff; white-space: nowrap; }
+  #v3skip { position: absolute; right: 16px; bottom: 16px; display: none; padding: 8px 16px; font-size: 16px; font-weight: bold; border: 3px solid #fff;
+            border-radius: 10px; background: rgba(0,0,0,.5); color: #fff; font-family: inherit; }
+  #v3d.intro #v3skip { display: block; }
+  #v3d.intro #v3top, #v3d.intro #v3map, #v3d.intro #v3bottom, #v3d.intro #v3touch, #v3d.intro #v3cross, #v3d.intro #v3flash, #v3d.intro #v3feed, #v3d.intro #v3swap { display: none !important; }
+  #v3flash { position: absolute; top: 52px; left: 10px; width: 48px; height: 48px; font-size: 24px; }
+  #v3cross { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; pointer-events: none;
+             background: linear-gradient(#fff, #fff) center/2px 100% no-repeat, linear-gradient(#fff, #fff) center/100% 2px no-repeat; opacity: .85;
+             filter: drop-shadow(0 0 1px #000); }
+  #v3hit { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 30px; font-weight: bold; pointer-events: none; text-shadow: 0 0 3px #000; }
+  #v3hit.kill { color: #ff4040; }
+  #v3dmg { position: absolute; inset: 0; pointer-events: none; opacity: 0; box-shadow: inset 0 0 120px 40px rgba(220, 20, 20, .9); }
+  #v3scope { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at center, transparent 0 32vmin, #000 33vmin); }
+  #v3msg { position: absolute; left: 50%; top: 20%; transform: translateX(-50%); font-size: 28px; font-weight: bold; text-shadow: 3px 3px 0 #000;
+           pointer-events: none; white-space: nowrap; }
+  #v3hint { position: absolute; left: 50%; top: 30%; transform: translateX(-50%); color: #fff; background: rgba(0,0,0,.6); padding: 8px 14px;
+            border-radius: 10px; font-size: 14px; pointer-events: none; max-width: 70%; text-align: center; }
+  #v3bottom { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  #v3hp { display: flex; align-items: center; gap: 8px; pointer-events: none; }
+  #v3hp i { width: 200px; height: 14px; background: rgba(0,0,0,.6); border: 2px solid #000; border-radius: 8px; overflow: hidden; }
+  #v3hp u { display: block; height: 100%; width: 100%; background: #6ccf5f; }
+  #v3hp b { color: #fff; font-size: 18px; text-shadow: 2px 2px 0 #000; min-width: 34px; }
+  #v3slots { display: flex; gap: 6px; }
+  #v3slots button { padding: 6px 10px; font-size: 14px; font-weight: bold; border: 3px solid #000; border-radius: 8px; background: rgba(255,255,255,.85);
+                    color: #222; font-family: inherit; touch-action: none; }
+  #v3slots button.on { background: #ffd24a; }
+  #v3ammo { color: #fff; font-size: 18px; font-weight: bold; text-shadow: 2px 2px 0 #000; min-height: 22px; pointer-events: none; }
+  #v3swap { position: absolute; left: 50%; bottom: 150px; transform: translateX(-50%); width: auto; padding: 0 14px; font-size: 16px; }
+  #v3stick { position: absolute; width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,.18); border: 3px solid rgba(255,255,255,.5); pointer-events: none; }
+  #v3knob { position: absolute; left: 30px; top: 30px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.7); }
+  #v3touch > .hudbtn { position: absolute; width: 64px; height: 64px; font-size: 30px; border-radius: 50%; }
+  #v3fire { right: 26px; bottom: 90px; width: 84px !important; height: 84px !important; font-size: 40px !important; }
+  #v3jump { right: 120px; bottom: 30px; }
+  #v3reload { right: 26px; bottom: 190px; }
+  #v3aim { right: 120px; bottom: 120px; }
+  #v3nogl { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; }
+  #v3end { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.6); }
   /* キャラのステータス */
   #info { position: fixed; right: 10px; top: 70px; z-index: 6; width: min(270px, 46vw); max-height: calc(100% - 140px); overflow-y: auto; box-sizing: border-box;
           padding: 10px 12px; background: rgba(30, 20, 44, .93); color: #fff; border: 3px solid #000; border-radius: 12px; font-size: 14px; }
@@ -233,6 +283,7 @@
   #dialog .note, #dialog .field > span { text-shadow: none; }
   #dialog textarea { width: 100%; height: 110px; box-sizing: border-box; font: 12px/1.4 monospace; word-break: break-all; }
   #dialog .seg button { font-size: 14px; padding: 5px 10px; }
+  #dialog .qr { align-self: center; width: min(260px, 60vw); height: auto; image-rendering: pixelated; border: 3px solid #000; }
   .setting .nameIn { text-align: center; }
   .err { margin: 0; color: #c02020; font-size: 14px; }
   @media (max-height: 500px) {   /* 横向きのスマホ */
@@ -250,7 +301,10 @@
     .quest { grid-template-columns: 26px 1fr 80px 60px 56px; padding: 5px 8px; }
     .coin { top: 8px; right: 8px; font-size: 16px; }
     button.big { font-size: 24px; padding: 8px 40px; }
-    .screen h1 { font-size: 34px; }
+    .screen h1 { font-size: 30px; }
+    #home { gap: 6px; }
+    #home #mascot { width: 54px; height: 66px; }
+    #home .row button.small { padding: 6px 14px; font-size: 14px; }
     .edMain { flex-wrap: nowrap; gap: 10px; }
     .edLeft { max-width: 52vw; }
     .tools, .palette { gap: 4px; }
@@ -301,6 +355,41 @@
   <h3 id="infoName"></h3>
   <div id="infoBody"></div>
 </div>
+<div id="v3d" class="hidden">
+  <canvas id="v3canvas"></canvas>
+  <div id="v3dmg"></div>
+  <div id="v3fade"></div>
+  <div id="v3subs" class="hidden"></div>
+  <button id="v3skip" data-i18n>スキップ ▶</button>
+  <div id="v3scope" class="hidden"></div>
+  <div id="v3top"><span id="v3alive"></span><span id="v3kills"></span></div>
+  <canvas id="v3map" width="120" height="120"></canvas>
+  <div id="v3feed"></div>
+  <div id="v3cross"></div>
+  <div id="v3hit" class="hidden">✕</div>
+  <div id="v3msg" class="hidden"></div>
+  <div id="v3hint" class="hidden"></div>
+  <div id="v3bottom">
+    <div id="v3hp"><i><u id="v3hpbar"></u></i><b id="v3hptext"></b></div>
+    <div id="v3slots"></div>
+    <div id="v3ammo"></div>
+  </div>
+  <button id="v3swap" class="hudbtn hidden" data-i18n>✋ とりかえる（E）</button>
+  <div id="v3touch" class="hidden">
+    <div id="v3stick" class="hidden"><i id="v3knob"></i></div>
+    <button id="v3fire" class="hudbtn" aria-label="撃つ" data-i18n-aria>🔫</button>
+    <button id="v3jump" class="hudbtn" aria-label="ジャンプ" data-i18n-aria>⤴</button>
+    <button id="v3reload" class="hudbtn" aria-label="こめなおす" data-i18n-aria>🔄</button>
+    <button id="v3aim" class="hudbtn" aria-label="ねらう" data-i18n-aria>🔍</button>
+  </div>
+  <button id="v3exit" class="hudbtn" aria-label="3Dをやめる" data-i18n-aria>✕</button>
+  <button id="v3flash" class="hudbtn hidden" aria-label="懐中電灯（F）" data-i18n-aria>🔦</button>
+  <div id="v3nogl" class="hidden" data-i18n>この機械では、3Dが使えないみたい…</div>
+  <div id="v3end" class="hidden">
+    <div class="tutBox"><h2 id="v3endTitle"></h2><p id="v3endText"></p>
+      <div class="tutNav"><button id="v3next" class="hidden" data-i18n>つぎのレベルへ ▶</button><button id="v3again" data-i18n>もう一回</button><button id="v3back" data-i18n>もどる</button></div></div>
+  </div>
+</div>
 <div id="news" class="hidden">
   <div class="tutBox newsBox">
     <button id="newsClose" class="hudbtn" aria-label="とじる" data-i18n-aria>✕</button>
@@ -333,7 +422,7 @@
     <button id="btnHelp" class="small" data-i18n>❓ あそびかた</button>
     <button id="btnNews" class="small"><span data-i18n>📰 ニュース</span><b id="newsBadge" class="hidden">NEW</b></button>
   </div>
-  <p class="ver"><span data-i18n>ブラウザ版</span> 1.0</p>
+  <p class="ver"><span data-i18n>ブラウザ版</span> 1.3</p>
 </div>
 
 <div id="shop" class="screen hidden">
@@ -396,7 +485,9 @@ if (!window.Matter) document.write('<script src="https://cdnjs.cloudflare.com/aj
 <script src="news.js"></script>
 <script src="sound.js"></script>
 <script src="shop.js"></script>
+<script src="qr.js"></script>
 <script src="mods.js"></script>
 <script src="game.js"></script>
+<script src="3d.js"></script>
 </body>
 </html>

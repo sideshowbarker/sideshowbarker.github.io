@@ -60,8 +60,9 @@ function validate(raw) {
     if (!v) throw new Error(tr('色のデータがおかしいです'));
     return v;
   });
-  const w = type === 'char' ? HEAD_W : Math.round(num(raw.w, 4, MAX_W, 12));
-  const h = type === 'char' ? HEAD_H : Math.round(num(raw.h, 2, MAX_H, 5));
+  const res = type === 'char' && raw.res === 2 ? 2 : 1;   // キャラのマスのこまかさ（2 なら、たて横2倍のマス）
+  const w = type === 'char' ? HEAD_W * res : Math.round(num(raw.w, 4, MAX_W, 12));
+  const h = type === 'char' ? HEAD_H * res : Math.round(num(raw.h, 2, MAX_H, 5));
   if (!Array.isArray(raw.px) || raw.px.length !== h) throw new Error(tr('絵のデータがおかしいです'));
   let painted = 0;
   const clip = (r) => [...r].map((ch) => {
@@ -77,7 +78,8 @@ function validate(raw) {
   const m = { v: 1, type, name: cleanName(raw.name), colors, px };
   if (type === 'char') {
     // どう・うで・あしは、かかなければ、ふつうの形のまま（からの絵）
-    for (const [part, [pw, ph]] of Object.entries(PART_SIZE)) m[PX_KEY[part]] = parsePart(raw[PX_KEY[part]], pw, ph).map(clip);
+    m.res = res;
+    for (const [part, [pw, ph]] of Object.entries(PART_SIZE)) m[PX_KEY[part]] = parsePart(raw[PX_KEY[part]], pw * res, ph * res).map(clip);
     m.face = isOneOf(FACES, raw.face) ? raw.face : 'fruit';
     m.skin = color(raw.skin, '#8a4bbf');
     m.shirt = color(raw.shirt, '#5cb85c');
@@ -141,6 +143,9 @@ function changed() { for (const fn of listeners) fn(); }
 const isMine = (m) => SHOP.isMine(m);
 // よそから来たモッドを足す。売り物をもう一度読みこんだときは、前の物を新しくする（買ったかどうかは、そのまま）
 function addMod(m) {
+  if (m.sale && isMine(m) && mods.some((x) => x.sale && x.author === m.author && x.sale.id === m.sale.id)) {
+    throw new Error(tr('これは、あなたが売っているモッドだよ。自分では買えないので、友だちのスマホやタブレットで読みこんでもらってね。'));
+  }
   const same = m.sale ? mods.find((x) => x.sale && x.author === m.author && x.sale.id === m.sale.id) : null;
   if (same) {
     m.id = same.id;
@@ -213,7 +218,7 @@ function encode(m) {
   const arr = d.type === 'char'
     ? ['c', d.name, hex6(d.colors), enRows(d.px), enRows(d.torsoPx), enRows(d.armPx), enRows(d.legPx),
        FACES.findIndex(([k]) => k === d.face), d.skin.slice(1), d.shirt.slice(1), d.outline.slice(1), d.blood.slice(1),
-       d.tough, d.weight, d.sparks ? 1 : 0, d.undead ? 1 : 0, BEHAVIORS.findIndex(([k]) => k === d.behavior), d.speed, d.power, ...tail]
+       d.tough, d.weight, d.sparks ? 1 : 0, d.undead ? 1 : 0, BEHAVIORS.findIndex(([k]) => k === d.behavior), d.speed, d.power, ...tail, d.res === 2 ? 2 : 1]
     : ['t', d.name, hex6(d.colors), enRows(d.px), d.w, d.h, KINDS.findIndex(([k]) => k === d.kind), d.weight, d.bounce, d.bladeFrom, d.gunPower, d.gunAuto ? 1 : 0, d.fuse, d.power, ...tail];
   let bin = '';
   for (const b of new TextEncoder().encode(JSON.stringify(arr))) bin += String.fromCharCode(b);
@@ -227,7 +232,7 @@ function fromCompact(a) {
              torsoPx: deRows(a[4]), armPx: deRows(a[5]), legPx: deRows(a[6]),
              face: (FACES[a[7]] || [])[0], skin: '#' + a[8], shirt: '#' + a[9],
              outline: '#' + a[10], blood: '#' + a[11], tough: a[12], weight: a[13], sparks: a[14] === 1, undead: a[15] === 1, behavior: (BEHAVIORS[a[16]] || [])[0],
-             speed: a[17], power: a[18], author: a[19], by: a[20], sale: sale(a[21], a[22]) };
+             speed: a[17], power: a[18], author: a[19], by: a[20], sale: sale(a[21], a[22]), res: a[23] };
   }
   if (a[0] === 't') {
     return { v: 1, type: 'thing', name: a[1], colors: unhex6(String(a[2])), px: deRows(a[3]), w: a[4], h: a[5], kind: (KINDS[a[6]] || [])[0], weight: a[7], bounce: a[8],
@@ -323,7 +328,7 @@ function build() {
     el('h2', { textContent: tr('🛠 モッドエディター') }),
     note(tr('自分でキャラや物を作れるよ。作ったモッドは、アイテムのひきだしの「モッド」に出てくる。コードをコピーして友だちにわたしたり、値段をつけて売ったりもできる。')),
     el('div', { className: 'row' },
-      button(tr('＋ キャラを作る'), () => edit(newChar(), true)),
+      button(tr('＋ キャラを作る'), () => { const m = newChar(); convertRes(m, 2); edit(m, true); }),   // あたらしいキャラは、こまかいマスから
       button(tr('＋ 物を作る'), () => edit(newThing(), true)),
       button(tr('📋 コードを読みこむ'), () => importCode()),
       button(tr('📁 ファイルを読みこむ'), () => fileInput.click())),
@@ -396,16 +401,38 @@ function showDialog(title, fill) {
   d.classList.remove('hidden');
 }
 const closeDialog = () => { const d = dialogEl(); if (d) d.classList.add('hidden'); };
+// コードを入れたリンク（スマホのカメラで QR コードをうつすと、ゲームが開いて、コードを読みこむ）
+function codeLink(code) {
+  const base = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : 'https://sideshowbarker.net/grape-simulator/';
+  return base + '#c=' + encodeURIComponent(code);
+}
 function codeBox(title, text, code) {
   showDialog(title, (box) => {
     const ta = el('textarea', { readOnly: true, value: code });
+    let qr = null;
+    try {
+      qr = window.GrapeQR.canvas(codeLink(code), 330);
+      qr.className = 'qr';
+    } catch (e) { /* 長すぎて QR コードにできないときは、文字だけ */ }
     const copy = button(tr('📋 コピー'), () => {
       const fail = () => { ta.focus(); ta.select(); toast(tr('コピーできなかったので、文字をえらんでコピーしてね')); };
       if (!navigator.clipboard) { fail(); return; }
       navigator.clipboard.writeText(code).then(() => toast(tr('コピーした！ 友だちにわたしてね')), fail);
     });
-    box.append(note(text), ta, el('div', { className: 'row' }, copy, button(tr('とじる'), closeDialog)));
+    box.append(note(text));
+    if (qr) box.append(note(tr('📷 友だちのスマホやタブレットのカメラで、このQRコードをうつすと、ゲームが開いて読みこめるよ（文字を打たなくていいよ）。')), qr);
+    box.append(ta, el('div', { className: 'row' }, copy, button(tr('とじる'), closeDialog)));
   });
+}
+// リンクの #c= についてきたコードを読みこむ（QR コードから開いたとき）
+function fromLink() {
+  const h = location.hash;
+  if (!h.startsWith('#c=')) return false;
+  let code = '';
+  try { code = decodeURIComponent(h.slice(3)); } catch (e) { return false; }
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* できなくても動く */ }
+  importCode(null, code);
+  return true;
 }
 function showCode(m) {
   const text = !m.sale ? tr('このコードを友だちにわたすと、同じモッドを読みこめるよ。')
@@ -413,9 +440,10 @@ function showCode(m) {
     : tr('売り物のモッドなので、このコードを読みこんだ人は、ショップで買うと使えるよ。');
   codeBox(tr('「{name}」のコード', { name: m.name }), text, encode(m));
 }
-function importCode(onDone) {
+function importCode(onDone, prefill) {
   showDialog(tr('コードを読みこむ'), (box) => {
     const ta = el('textarea', { placeholder: tr('モッドのコード（GRAPEMOD1:）か、お礼コード（GRAPEPAY1:）を、ここにはりつけてね') });
+    if (prefill) ta.value = prefill;
     const err = el('p', { className: 'err' });
     const ok = button(tr('読みこむ'), () => {
       try {
@@ -485,7 +513,16 @@ function newChar() {
            px: ['....4....', '....33...', '.0000000.', '011111110', '012111110'].concat(Array(5).fill('011111110'), ['.0000000.']),
            face: 'fruit', skin: '#8a4bbf', shirt: '#5cb85c', outline: '#2e1442', blood: '#d0182e', tough: 1, weight: 1, sparks: false,
            undead: false, behavior: 'still', speed: 2, power: 1,
-           torsoPx: Array(11).fill('.'.repeat(4)), armPx: Array(7).fill('.'.repeat(2)), legPx: Array(8).fill('.'.repeat(3)) };
+           torsoPx: Array(11).fill('.'.repeat(4)), armPx: Array(7).fill('.'.repeat(2)), legPx: Array(8).fill('.'.repeat(3)), res: 1 };
+}
+// マスのこまかさを変える：2倍にするときは1マスを2×2に、もどすときは2×2の左上を使う
+function convertRes(m, to) {
+  const from = m.res === 2 ? 2 : 1;
+  if (from === to) return;
+  const conv = (rows) => (to === 2 ? rows.flatMap((r) => { const w = [...r].map((ch) => ch + ch).join(''); return [w, w]; })
+                                   : rows.filter((r, j) => j % 2 === 0).map((r) => [...r].filter((ch, i) => i % 2 === 0).join('')));
+  for (const k of ['px', 'torsoPx', 'armPx', 'legPx']) if (m[k]) m[k] = conv(m[k]);
+  m.res = to;
 }
 function newThing() {
   return { v: 1, type: 'thing', name: tr('わたしの物'), colors: [], w: 12, h: 5, px: Array(5).fill('.'.repeat(12)),
@@ -493,8 +530,9 @@ function newThing() {
 }
 let ed = null;   // 作っているモッド：{ m, isNew, undo, tool, color, custom, brush, part }
 let gridCanvas, paletteEl, toolsEl, settingsEl, previewEl, stroke = null;
-const gw = () => (ed.m.type === 'char' ? (ed.part === 'head' ? HEAD_W : PART_SIZE[ed.part][0]) : ed.m.w);
-const gh = () => (ed.m.type === 'char' ? (ed.part === 'head' ? HEAD_H : PART_SIZE[ed.part][1]) : ed.m.h);
+const resOf = () => (ed.m.res === 2 ? 2 : 1);
+const gw = () => (ed.m.type === 'char' ? (ed.part === 'head' ? HEAD_W : PART_SIZE[ed.part][0]) * resOf() : ed.m.w);
+const gh = () => (ed.m.type === 'char' ? (ed.part === 'head' ? HEAD_H : PART_SIZE[ed.part][1]) * resOf() : ed.m.h);
 const curPx = () => ed.m[PX_KEY[ed.part]];
 function edit(m, isNew) {
   build();
@@ -504,12 +542,17 @@ function edit(m, isNew) {
   editPanel.classList.remove('hidden');
   backBtn().classList.add('hidden');
   renderEditor();
+  const scroller = editPanel.closest('.screen');   // 前の画面のスクロールが残っていると、絵のマスが画面の外になる
+  if (scroller) scroller.scrollTop = 0;
+  if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
 }
 function closeEditor() {
   ed = null;
   stroke = null;
   editPanel.classList.add('hidden');
   listPanel.classList.remove('hidden');
+  const scroller = listPanel.closest('.screen');
+  if (scroller) scroller.scrollTop = 0;
   backBtn().classList.remove('hidden');
   renderCards();
 }
@@ -677,6 +720,8 @@ function renderSettings() {
   settingsEl.append(previewEl);
   if (m.type === 'char') {
     settingsEl.append(
+      seg('res', tr('マスの こまかさ'), labels([[1, 'ふつう'], [2, 'こまかい（2ばい）']]), m.res === 2 ? 2 : 1,
+          (v) => { pushUndo(); convertRes(m, v); renderEditor(); const sc = editPanel.closest('.screen'); if (sc) sc.scrollTop = 0; }),
       seg('face', tr('顔'), labels(FACES), m.face, (v) => { m.face = v; drawGrid(); }),
       el('div', { className: 'colors' }, colorField(tr('肌'), 'skin'), colorField(tr('服'), 'shirt'), colorField(tr('りんかく'), 'outline'),
          colorField(tr('血'), 'blood')),
@@ -734,13 +779,15 @@ function resize(w, h) {
 }
 function pushUndo() {
   const m = ed.m;
-  ed.undo.push(JSON.stringify({ px: m.px, torsoPx: m.torsoPx, armPx: m.armPx, legPx: m.legPx, colors: m.colors, w: m.w, h: m.h }));
+  ed.undo.push(JSON.stringify({ px: m.px, torsoPx: m.torsoPx, armPx: m.armPx, legPx: m.legPx, colors: m.colors, w: m.w, h: m.h, res: m.res }));
   if (ed.undo.length > 40) ed.undo.shift();
 }
 function undo() {
   const s = ed.undo.pop();
   if (!s) return;
+  const before = ed.m.res;
   Object.assign(ed.m, JSON.parse(s));
+  if (ed.m.res !== before) { renderEditor(); return; }
   if (ed.m.type === 'thing') renderSettings();
   renderPalette();
   drawGrid();
@@ -783,10 +830,11 @@ function drawGrid() {
   }
   if (m.type === 'char' && ed.part === 'head') {   // 顔の四角と、目と口の場所
     x.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    for (const [r, c] of FACE_DOTS[m.face]) x.fillRect(c * cs + cs * 0.25, (r + 2) * cs + cs * 0.25, cs * 0.5, cs * 0.5);
+    const rs = resOf(), k = cs * rs;
+    for (const [r, c] of FACE_DOTS[m.face]) x.fillRect(c * k + k * 0.25, (r + 2) * k + k * 0.25, k * 0.5, k * 0.5);
     x.strokeStyle = 'rgba(220, 40, 40, 0.8)';
     x.lineWidth = 2;
-    x.strokeRect(1, 2 * cs + 1, w * cs - 2, 9 * cs - 2);
+    x.strokeRect(1, 2 * k + 1, w * cs - 2, 9 * k - 2);
   } else if (m.type === 'thing' && m.kind === 'blade') {
     x.fillStyle = 'rgba(220, 40, 40, 0.85)';
     x.fillRect(m.bladeFrom * cs - 1.5, 0, 3, h * cs);
@@ -893,7 +941,7 @@ function onGridUp(e) {
 addEventListener('resize', () => { if (ed) drawGrid(); });
 
 window.GrapeMods = {
-  IDX, validate, encode, decode, open, relang, importCode, codeBox, readCode,
+  IDX, validate, encode, decode, open, relang, importCode, codeBox, readCode, fromLink, codeLink,
   list: () => mods.slice(),
   get: (id) => mods.find((m) => m.id === id) || null,
   preview: previewCanvas,

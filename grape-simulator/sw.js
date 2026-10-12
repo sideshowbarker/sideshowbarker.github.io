@@ -1,6 +1,6 @@
 // ホーム画面に追加したあと、ネットが無くても遊べるようにファイルをためておく（https で開いたときだけ動く）
-const CACHE = 'grape-sim-v7';
-const FILES = ['./', './index.html', './matter.min.js', './lang.js', './news.js', './sound.js', './shop.js', './mods.js', './game.js', './manifest.json',
+const CACHE = 'grape-sim-v10';
+const FILES = ['./', './index.html', './matter.min.js', './lang.js', './news.js', './sound.js', './shop.js', './qr.js', './mods.js', './game.js', './3d.js', './manifest.json',
                './icon-192.png', './icon-512.png'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));

@@ -72,6 +72,19 @@ const FRUIT_HEAD = [   // 頭（横顔。右向き。上の2行はへた、そ�
   'DPPPPPPPD',
   '.DDDDDDD.',
 ];
+const BACT_HEAD = [   // 上の2行は、とげ
+  'g..g.g..g',
+  '.gGgGgGg.',
+  'DDDDDDDDD',
+  'DPPPPPPPD',
+  'DPPPPPPPD',
+  'DPPPPPPPD',
+  'DPPPPPPPD',
+  'DPPPPPPPD',
+  'DPPPPPPPD',
+  'DPPPPPPPD',
+  '.DPDPDPD.',
+];
 const STRAW_HEAD = [
   '..gGgGg..',
   '...GGG...',
@@ -143,6 +156,13 @@ const FRUIT_FACES = {
   hurt: [[3, 6, 'K'], [6, 6, 'K'], [6, 7, 'K'], [2, 5, 'R'], [1, 5, 'R']],
   ko:   [[3, 5, 'K'], [3, 6, 'K'], [3, 7, 'K'], [6, 6, 'K']],
   dead: [[2, 5, 'K'], [2, 7, 'K'], [3, 6, 'K'], [4, 5, 'K'], [4, 7, 'K'], [5, 6, 'K'], [5, 7, 'K'], [6, 6, 'K'], [6, 7, 'K']],
+};
+// バクテリア（バックルームにいる、まっ黒な生きもの）の顔：白い目と、ギザギザの口
+const BACT_FACES = {
+  ok:   [[2, 5, 'W'], [2, 7, 'W'], [5, 4, 'W'], [6, 5, 'W'], [5, 6, 'W'], [6, 7, 'W']],
+  hurt: [[2, 5, 'W'], [2, 7, 'R'], [5, 4, 'W'], [6, 5, 'W'], [5, 6, 'W'], [6, 7, 'W']],
+  ko:   [[2, 5, 'K'], [2, 7, 'K'], [5, 5, 'W'], [5, 6, 'W']],
+  dead: [[2, 5, 'R'], [2, 7, 'R'], [5, 5, 'K'], [5, 6, 'K']],
 };
 const ROBOT_FACES = {
   ok:   [[3, 6, 'E'], [3, 7, 'E'], [6, 5, 'K'], [6, 6, 'K'], [6, 7, 'K']],
@@ -860,6 +880,10 @@ const CHARS = {
                 note: 'ゾンビになった力士。死んでも起き上がる',
                 blood: '#6a9a2a', stain: '#3d5c14', hurtTint: '70, 120, 30',
                 pal: { D: '#23361a', P: '#8fb870', p: '#6a8f52', L: '#b8d8a0', S: '#6b5a8a', G: '#1f160c', g: '#000000', y: '#3d2f24', W: '#f0f0d0' } },
+  bacteria: { name: 'バクテリア', head: BACT_HEAD, faces: BACT_FACES, tough: 2.5, density: 0.0022, bleedRate: 0.3, behavior: 'attack', speed: 3.5, power: 1.6,
+              note: 'バックルームにいる、まっ黒な生きもの。ほかのキャラを、おそう',
+              blood: '#1a1a1a', stain: '#0c0c0c', hurtTint: '10, 10, 10',
+              pal: { D: '#000000', P: '#161616', p: '#0b0b0b', L: '#2a2a2a', S: '#121212', G: '#1d1d1d', g: '#000000', W: '#f4f4f4' } },
   goldrobot: { name: 'ゴールドロボ', head: ROBOT_HEAD, faces: ROBOT_FACES, tough: 3, density: 0.005, sparks: true, bleedRate: 0.3,
                blood: '#2a2a2a', stain: '#161616', hurtTint: '20, 20, 20',
                pal: { D: '#5a4210', P: '#f0c030', p: '#b8901e', L: '#fff3a8', S: '#d23a2a', G: '#fff3a8', g: '#e23b3b',
@@ -961,12 +985,13 @@ function crateSprite(n) {
 }
 
 // キャラの全身の絵（アイテムのひきだしと、スワイプ中の影に使う）
-function makeFigure(kind, s = SPRITES[kind]) {
+// res はこまかさ（2 なら、モッドのキャラで、ドットが半分の大きさ。絵も場所も2倍）
+function makeFigure(kind, s = SPRITES[kind], res = (CHARS[kind] && CHARS[kind].res) || 1) {
   const F = (CHARS[kind] && CHARS[kind].fig) || { w: 9, head: [0, 0], torso: [3, 11], armB: [3, 12], armF: [4, 12], legUB: [3, 21], legUF: [5, 21] };
   const c = document.createElement('canvas');
-  c.width = F.w; c.height = 37;
+  c.width = F.w * res; c.height = 37 * res;
   const x = c.getContext('2d');
-  const put = (name, [px, py], dy = 0) => x.drawImage(s[name], px, py + dy);
+  const put = (name, [px, py], dy = 0) => x.drawImage(s[name], px * res, (py + dy) * res);
   put('armB', F.armB); put('armB', F.armB, 7);
   put('legUB', F.legUB); put('legLB', F.legUB, 8);
   put('torso', F.torso);
@@ -1188,7 +1213,7 @@ const MAPS = [
     water: { x: 560, y: 248, w: 320, h: 34 } },
   // 駅：線路は、ホームより低い。ときどき電車がやってきて、ぶつかった物をはねとばす（ホームに突っ込んでくることもある）
   { id: 'station', name: '駅', desc: 'ときどき電車が突っ込んでくる！', w: 1600, h: 300, theme: 'station', music: 'play',
-    sky: '#b9d3ea', floor: '#8c887e', edge: '#d9d4c7', gravity: 1, start: 505,
+    sky: '#b9d3ea', floor: '#8c887e', edge: '#d9d4c7', polyTop: '#d9d4c7', polyFill: '#8c887e', gravity: 1, start: 505,
     blocks: [
       { x: 0, y: 220, w: 560, h: 80, look: 'platform2' },
       { x: 560, y: 270, w: 480, h: 30, look: 'track' },
@@ -1202,54 +1227,94 @@ const MAPS = [
 
 // マップの物は、キャラより大きく見えるように、ぜんぶ MAP_SCALE 倍にする（エンドレスは地面を自動で作るので、そのまま）
 
-// バックルーム：黄色い壁紙と、じゅうたんと、蛍光灯の、はてしなく続く めいろ。部屋のかべには、ところどころ出入り口があって、
-// ゆかには、下の階へ落ちる穴がある。めいろは、ぜんぶの部屋がつながるように作る（同じ形が毎回できる）
-function makeBackroomsMap() {
-  const C = 16, R = 4, CW = 90, CH = 70, FT = 6, WT = 6, HOLE = 40;
-  let seed = 4242;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  const east = Array.from({ length: R }, () => Array(C).fill(false));    // 右のとなりとつながっているか
-  const south = Array.from({ length: R }, () => Array(C).fill(false));   // 下のとなりとつながっているか
-  const seen = Array.from({ length: R }, () => Array(C).fill(false));
-  const stack = [[0, 0]];
-  seen[0][0] = true;
-  while (stack.length) {   // 深さ優先で、かべをこわしながら進む（どの部屋にも行ける）
-    const [c, r] = stack[stack.length - 1];
-    const next = [[c + 1, r, 'e'], [c - 1, r, 'w'], [c, r + 1, 's'], [c, r - 1, 'n']].filter(([x, y]) => x >= 0 && x < C && y >= 0 && y < R && !seen[y][x]);
-    if (!next.length) { stack.pop(); continue; }
-    const [x, y, d] = next[Math.floor(rnd() * next.length)];
-    if (d === 'e') east[r][c] = true; else if (d === 'w') east[y][x] = true; else if (d === 's') south[r][c] = true; else south[y][x] = true;
-    seen[y][x] = true;
-    stack.push([x, y]);
-  }
-  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {   // ぬけ道をふやす
-    if (c < C - 1 && rnd() < 0.18) east[r][c] = true;
-    if (r < R - 1 && rnd() < 0.12) south[r][c] = true;
-  }
-  const w = C * CW, h = R * CH, blocks = [{ x: 0, y: h - 8, w, h: 8, look: 'bfloor' }];
-  blocks.push({ x: 0, y: 0, w, h: FT, look: 'bfloor', kind: 'ceiling' });
-  for (let r = 0; r < R - 1; r++) {   // ゆか（穴のある所は、あける）。つづくゆかは、ひとつにまとめる
-    let x0 = null;
-    const close = (x1) => { if (x0 != null && x1 > x0) blocks.push({ x: x0, y: (r + 1) * CH - FT, w: x1 - x0, h: FT, look: 'bfloor' }); x0 = null; };
-    for (let c = 0; c < C; c++) {
-      if (south[r][c]) {
-        const hx = c * CW + Math.floor((CW - HOLE) / 2);
-        if (x0 == null) x0 = c * CW;
-        close(hx);
-        x0 = hx + HOLE;
-      } else if (x0 == null) x0 = c * CW;
+// バックルーム：黄色い壁紙と、じゅうたんと、蛍光灯の、どこまでも続く めいろ（エンドレスのマップのしくみで、所ごとに作る）。
+// いちばん上は、ふつうの部屋（ほんとうの世界）。その床をすりぬける（ノークリップ）と、下のバックルームに落ちる。
+// バックルームは 4 階だて。所（CHUNK）ごとに、かべ・出入り口・床の穴・段・天井のでっぱりを、その所の番号から決める（毎回同じ形）。
+const BR = { top: 150, lv: 110, levels: 4, ft: 8, cell: 80, house: [-160, 320], glitch: [150, 190] };
+BR.h = BR.top + BR.lv * BR.levels;
+const roomCache = new Map();
+function roomChunk(i) {
+  let r = roomCache.get(i);
+  if (r) return r;
+  const rnd = makeRng(((i * 48271) % 2000000 + 2000000) % 2000000 + 17);
+  const x0 = i * CHUNK, rects = [], lights = [];
+  const house = x0 >= BR.house[0] && x0 < BR.house[1];
+  // 上：ふつうの部屋の床（すりぬけられる）か、バックルームの天井
+  if (house) {
+    rects.push({ x: x0, y: 0, w: CHUNK, h: 20, look: 'hceil', kind: 'ceiling' });
+    rects.push({ x: x0, y: BR.top, w: CHUNK, h: BR.ft, look: 'hfloor', kind: 'noclip' });
+    if (x0 === BR.house[0]) rects.push({ x: x0, y: 20, w: 8, h: BR.top - 20, look: 'hwall' });
+    if (x0 + CHUNK === BR.house[1]) rects.push({ x: x0 + CHUNK - 8, y: 20, w: 8, h: BR.top - 20, look: 'hwall' });
+  } else rects.push({ x: x0, y: 0, w: CHUNK, h: BR.top + BR.ft, look: 'bceil', kind: 'ceiling' });
+  for (let k = 0; k < BR.levels; k++) {
+    const y0 = BR.top + k * BR.lv, floorY = y0 + BR.lv - BR.ft, last = k === BR.levels - 1;
+    for (let c = 0; c < CHUNK / BR.cell; c++) {
+      const cx = x0 + c * BR.cell;
+      // 床（いちばん下の階でなければ、ときどき穴があく）
+      const fh = last ? BR.ft + 400 : BR.ft;
+      if (!last && rnd() < 0.3) {
+        const hw = 30 + Math.floor(rnd() * 16), hx = cx + 10 + Math.floor(rnd() * (BR.cell - hw - 20));
+        rects.push({ x: cx, y: floorY, w: hx - cx, h: fh, look: 'bfloor' });
+        rects.push({ x: hx + hw, y: floorY, w: cx + BR.cell - hx - hw, h: fh, look: 'bfloor' });
+      } else rects.push({ x: cx, y: floorY, w: BR.cell, h: fh, look: 'bfloor' });
+      // 右のかべ：なし、出入り口のあるかべ、ひくいかべ、上だけのかべ
+      const t = rnd(), wx = cx + BR.cell - 3, top = y0 + (k === 0 ? BR.ft : 0);
+      if (t < 0.45) {
+        const door = 46 + Math.floor(rnd() * 14);
+        rects.push({ x: wx, y: top, w: 6, h: floorY - top - door, look: 'bwall' });
+      } else if (t < 0.6) {
+        const lowH = 14 + Math.floor(rnd() * 12);
+        rects.push({ x: wx, y: floorY - lowH, w: 6, h: lowH, look: 'bwall' });
+      } else if (t < 0.75) rects.push({ x: wx, y: top, w: 6, h: 30, look: 'bwall' });
+      // 段や、天井のでっぱりで、部屋ごとに形を変える
+      if (rnd() < 0.25) { const sw = 24 + Math.floor(rnd() * 24), sx = cx + 6 + Math.floor(rnd() * (BR.cell - sw - 12)); rects.push({ x: sx, y: floorY - 10, w: sw, h: 10, look: 'bwall' }); }
+      if (rnd() < 0.25) { const sw = 20 + Math.floor(rnd() * 30), sx = cx + 4 + Math.floor(rnd() * (BR.cell - sw - 8)); rects.push({ x: sx, y: top, w: sw, h: 14 + Math.floor(rnd() * 10), look: 'bwall' }); }
+      lights.push({ x: cx + BR.cell / 2, y: top + 2, on: rnd() < 0.85 });
     }
-    close(w);
   }
-  for (let r = 0; r < R; r++) for (let c = 0; c < C - 1; c++) {   // かべ（出入り口のある所は、ない）
-    if (!east[r][c]) blocks.push({ x: (c + 1) * CW - WT / 2, y: r * CH + FT, w: WT, h: CH - FT - (r === R - 1 ? 8 : FT), look: 'bwall' });
-  }
-  let start = CW / 2;
-  for (let c = 0; c < C; c++) if (!south[0][c]) { start = c * CW + CW / 2; break; }   // ゆかのある部屋から、はじめる
-  return { id: 'backrooms', name: 'バックルーム', desc: 'はてしない黄色い部屋の、めいろ', w, h, theme: 'backrooms', music: 'play', cell: [CW, CH],
-           sky: '#d8c766', floor: '#7a6a2e', edge: '#b8a850', gravity: 1, start, blocks };
+  r = { house, rects, lights };
+  roomCache.set(i, r);
+  if (roomCache.size > 400) roomCache.delete(roomCache.keys().next().value);
+  return r;
 }
-MAPS.push(makeBackroomsMap());
+function paintRoomChunk(c, m, i, mask) {
+  const x0 = i * CHUNK, R = roomChunk(i);
+  for (let x = 0; x < CHUNK; x++) {   // 黄色い壁紙（たてじま）
+    c.fillStyle = Math.floor((x0 + x) / 3) % 2 ? '#d1bf5e' : '#dccb70';
+    c.fillRect(x, 0, 1, m.h);
+  }
+  if (R.house) {   // ほんとうの世界の部屋：白いかべ、窓、本だな
+    c.fillStyle = '#e9edf2'; c.fillRect(0, 0, CHUNK, BR.top);
+    c.fillStyle = '#d5dbe3';
+    for (let y = 26; y < BR.top; y += 12) c.fillRect(0, y, CHUNK, 1);
+    const wx = ((x0 % 320) + 320) % 320 === 0 ? 30 : 90;
+    c.fillStyle = LINE_COLOR; c.fillRect(wx - 1, 49, 42, 40);
+    c.fillStyle = '#9fd6f0'; c.fillRect(wx, 50, 40, 38);
+    c.fillStyle = '#ffffff'; c.fillRect(wx + 19, 50, 2, 38); c.fillRect(wx, 68, 40, 2);
+    c.fillStyle = '#ffffff'; c.fillRect(wx + 4, 56, 10, 3);
+  }
+  for (const L of R.lights) {   // 蛍光灯
+    const lx = L.x - x0;
+    c.fillStyle = 'rgba(255, 251, 210, ' + (L.on ? 0.18 : 0) + ')'; c.fillRect(lx - 24, L.y + 3, 48, 30);
+    c.fillStyle = LINE_COLOR; c.fillRect(lx - 15, L.y, 30, 5);
+    c.fillStyle = L.on ? '#fffbe0' : '#8a8a7a'; c.fillRect(lx - 14, L.y + 1, 28, 3);
+  }
+  const rnd = makeRng(((i * 7919) % 1000000 + 1000000) % 1000000 + 5);
+  for (const b of R.rects) paintBlock(c, m, Object.assign({}, b, { x: b.x - x0 }), rnd, null);
+  if (R.house && BR.glitch[0] >= x0 && BR.glitch[0] < x0 + CHUNK) {   // すりぬけられる、ゆがんだ床の所（黄色い壁紙や、ノイズが見える）
+    const gx = BR.glitch[0] - x0, gw = BR.glitch[1] - BR.glitch[0], g2 = makeRng(99);
+    for (let y = BR.top - 3; y < BR.top + BR.ft; y++) for (let x = gx; x < gx + gw; x++) {
+      const v = g2();
+      c.fillStyle = v < 0.35 ? '#d8c766' : v < 0.55 ? '#c2b155' : v < 0.7 ? '#ff00ff' : v < 0.85 ? '#00ffff' : '#111111';
+      if (y >= BR.top || v < 0.4) c.fillRect(x, y, 1, 1);
+    }
+  }
+  if (mask) for (const b of R.rects) {
+    for (let y = Math.max(0, b.y); y < Math.min(m.h, b.y + b.h); y++) for (let x = Math.max(0, b.x - x0); x < Math.min(CHUNK, b.x - x0 + b.w); x++) mask[y * CHUNK + x] = 1;
+  }
+}
+MAPS.push({ id: 'backrooms', name: 'バックルーム', desc: 'どこまでも続く黄色いめいろ。部屋の床をすりぬけて入る', endless: true, rooms: true,
+            w: 800, h: BR.h, theme: 'backrooms', music: 'play', sky: '#1f1b10', floor: '#7a6a2e', edge: '#b8a850', gravity: 1, start: 60, blocks: [] });
 const MAP_SCALE = 1.5;
 function scaleMap(m) {
   const k = MAP_SCALE, r = (v) => Math.round(v * k);
@@ -1450,6 +1515,21 @@ function paintBlock(c, m, b, rnd, mask) {
       for (let xx = x + 2; xx < x + w; xx += 7) fill('#5a3a1e', xx, y + 4, 4, 4);
       specks('#4a4640', Math.floor(w * h / 20));
       break;
+    case 'hfloor':   // ほんとうの世界の、木の床
+      fill(LINE_COLOR, x, y - 1, w, h + 1); fill('#b07a48', x, y, w, h); fill('#c99360', x, y, w, 1);
+      for (let xx = x + 7; xx < x + w; xx += 14) fill('#8a5a33', xx, y + 1, 1, h - 1);
+      break;
+    case 'hceil':
+      fill('#f5f5f0', x, y, w, h); fill(LINE_COLOR, x, y + h - 1, w, 1);
+      break;
+    case 'hwall':
+      fill(LINE_COLOR, x, y, w, h); fill('#c9ced4', x + 1, y, w - 2, h);
+      break;
+    case 'bceil':   // バックルームの天井（タイル）
+      fill('#bdb38a', x, y, w, h); fill(LINE_COLOR, x, y + h - 1, w, 1);
+      for (let yy = y + 4; yy < y + h - 2; yy += 10) fill('#a99f78', x, yy, w, 1);
+      for (let xx = x + 5; xx < x + w; xx += 10) fill('#a99f78', xx, y, 1, h - 1);
+      break;
     case 'bfloor':   // じゅうたん
       fill(LINE_COLOR, x - 1, y - 1, w + 2, h + 2); fill('#8f7f38', x, y, w, h); fill('#a89846', x, y, w, 1);
       for (let xx = x + 2; xx < x + w; xx += 5) fill('#77672c', xx, y + Math.floor(h / 2), 1, 1);
@@ -1560,6 +1640,7 @@ function tree(c, x, ground) {
 }
 // エンドレスのマップの、i 番目の所の絵を描く。mask には、地面のドットに 1 を入れる
 function paintChunk(c, m, i, mask) {
+  if (m.rooms) { paintRoomChunk(c, m, i, mask); return; }
   const x0 = i * CHUNK, H = m.h;
   c.fillStyle = m.sky;
   c.fillRect(0, 0, CHUNK, H);
@@ -1730,6 +1811,7 @@ function buildMap(m) {
                               density: WATER_DENSITY, damp: 0.96 });
   for (const L of m.lava || []) liquids.push({ kind: 'lava', x: L.x * PX, y: L.y * PX, w: L.w * PX, h: L.h * PX, density: LAVA_DENSITY, damp: 0.9 });
   eruptTimer = 240;
+  bactTimer = 900;
   resetTrain();
   endlessBest = 0;
   const T = 2000;   // 壁や地面の、見えない所までの厚さ（速い物がすりぬけないように）
@@ -1772,7 +1854,13 @@ function ensureChunk(i) {
   let ch = chunks.get(i);
   if (ch) return ch;
   const bodies = [], bottom = (currentMap.h + 400) * PX;
-  for (let s = i * CHUNK; s < (i + 1) * CHUNK; s += SEG) {
+  if (currentMap.rooms) {
+    for (const b of roomChunk(i).rects) {
+      bodies.push(Bodies.rectangle((b.x + b.w / 2) * PX, (b.y + b.h / 2) * PX, b.w * PX, b.h * PX,
+                                   { isStatic: true, friction: 0.9, plugin: { kind: b.kind || 'ground' } }));
+    }
+  }
+  for (let s = i * CHUNK; !currentMap.rooms && s < (i + 1) * CHUNK; s += SEG) {
     const verts = [{ x: s * PX, y: endlessTop(s) * PX }, { x: (s + SEG) * PX, y: endlessTop(s + SEG) * PX },
                    { x: (s + SEG) * PX, y: bottom }, { x: s * PX, y: bottom }];
     const c = Vertices.centre(verts);
@@ -1990,8 +2078,29 @@ function updateJoints() {
 
 // ---- ケガ ----
 // 刃（や注射の針）なら「切る」、それ以外は「ぶつかる」。
+// ノークリップ：ほんとうの世界の床に、強くぶつかるか、ゆがんだ所にさわると、床をすりぬけて、バックルームに落ちる
+const NOCLIP_SPEED = 9;
+function startNoclip(g) {
+  if (g.noclip > 0) return;
+  g.noclip = 40;
+  for (const p of g.parts) { p.plugin.noclipMask = p.collisionFilter.mask; p.collisionFilter.mask &= ~CAT_WORLD; }
+  for (let k = 0; k < 16; k++) {
+    addFx({ x: g.torso.position.x + rand(-30, 30), y: g.torso.position.y + rand(-40, 40), vx: rand(-1, 1), vy: rand(-1, 1), g: 0, drag: 0.9,
+            life: rand(10, 25), size: PX * rand(0.8, 2), colors: ['#ff00ff', '#00ffff', '#d8c766', '#111111'] });
+  }
+  SND.play('click', 0.9, 0.5);
+  say('ノークリップ！', g.head.position.x, g.head.position.y - 50, '#ff66ff');
+  SHOP.event('noclip');
+}
+function updateNoclip(g, ts) {
+  g.noclip -= ts;
+  if (g.noclip > 0 || g.torso.position.y < (BR.top + BR.ft + 30) * PX) { if (g.noclip <= 0) g.noclip = 1; return; }
+  g.noclip = 0;
+  for (const p of g.parts) if (p.plugin.noclipMask != null) { p.collisionFilter.mask = p.plugin.noclipMask; p.plugin.noclipMask = null; }
+}
 function contact(g, part, other, speed, at) {
   const op = other.plugin || {};
+  if (op.kind === 'noclip' && (speed > NOCLIP_SPEED || (at.x > BR.glitch[0] * PX && at.x < BR.glitch[1] * PX))) { startNoclip(g); return; }
   if (op.owner && op.owner.train && stepCount - (g.trainStep || -999) > 120) { g.trainStep = stepCount; SHOP.event('trainHit'); }
   if (op.needle && onEdge(other, at, op.needle)) { inject(g, at, op.needle.kind); return; }
   if (op.blade && (op.blade.all || onEdge(other, at, op.blade))) { cut(g, part, speed, at, op.blade); return; }
@@ -2271,11 +2380,13 @@ function firebomb(x, y, power) {
 // 手のとどく所まで来たら、こうげきする（かみつく・なぐる）。speed はあるくはやさ、power はこうげきの強さ。
 // 立っているときだけ、うごく（ころんだら、たおれたまま）。ゾンビ（undead）どうしは、おそいあわない。ゾンビにころされたキャラは、ゾンビになる
 const SIGHT = 140 * PX, REACH = 24 * PX, ATTACK_COOL = 55;
-const isFriend = (a, b) => a.kind === b.kind || (CHARS[a.kind].undead && CHARS[b.kind].undead);
+const isFriend = (a, b) => (a.team || b.team ? a.team === b.team : a.kind === b.kind || (CHARS[a.kind].undead && CHARS[b.kind].undead));
 // 体ごと、左右をひっくりかえす（うしろ向きに歩かないように）。部品の場所・かたむき・関節の位置を、胴体をとおるたての線で、鏡うつしにする
 function turnAround(g) {
-  if (g.grip || g.seat || g.held > 0 || stepCount - (g.turnStep || -999) < 45) return;
+  if (g.seat || g.held > 0 || stepCount - (g.turnStep || -999) < 45) return;
   g.turnStep = stepCount;
+  const weapon = g.grip ? g.grip.ent.id : null;   // 武器を持っていたら、いったん手からはずして、向きを変えたあとで持ちなおす
+  if (weapon) { const old = g.grip.ent; unequip(g); removeThing(old); }
   const cx = g.torso.position.x;
   for (const p of g.parts) {
     const v = Body.getVelocity(p), w = Body.getAngularVelocity(p);
@@ -2286,13 +2397,15 @@ function turnAround(g) {
   }
   for (const c of g.joints) { c.pointA.x = -c.pointA.x; c.pointB.x = -c.pointB.x; }
   g.facing = -g.facing;
+  if (weapon) equip(g, weapon);
 }
 function nearestTarget(g) {
-  let best = null, bestD = SIGHT;
+  let best = null, bestD = g.team ? Infinity : SIGHT;
   for (const o of chars) {
     if (o === g || o.dead || isFriend(g, o) || o.seat) continue;
+    if (g.team && !o.team && CHARS[o.kind].behavior !== 'attack') continue;   // チームのキャラは、敵のチームと、おそってくるものだけをねらう
     const dx = o.torso.position.x - g.torso.position.x, dy = o.torso.position.y - g.torso.position.y;
-    if (Math.abs(dy) > 70 * PX) continue;
+    if (Math.abs(dy) > (g.team ? 300 : 70) * PX) continue;
     const d = Math.abs(dx);
     if (d < bestD) { best = o; bestD = d; }
   }
@@ -2310,8 +2423,9 @@ function attackChar(g, t, only) {   // only はテスト用：この種類の部
   g.swing = 22;
   g.atkCool = ATTACK_COOL;
   const dir = Math.sign(t.torso.position.x - g.torso.position.x) || g.facing;
-  const dmg = 16 * (ch.power || 1) * settings.damage;
-  part.plugin.bleed += 0.4;
+  const w = g.grip && g.grip.ent.T;   // 武器を持っていると、強い（刃なら、血がたくさん出る）
+  const dmg = 16 * (ch.power || 1) * settings.damage * (w ? (w.blade ? 2 : 1.6) : 1);
+  part.plugin.bleed += w && w.blade ? 1.2 : 0.4;
   Body.setVelocity(t.torso, { x: dir * (3 + (ch.power || 1) * 1.5), y: -2 });
   SND.play(CHARS[t.kind].sparks ? 'metal' : 'squish', 0.8);
   const before = t.dead;
@@ -2327,18 +2441,22 @@ function updateAI(ts) {
     if (g.swing > 0) g.swing -= ts;
     if (g.atkCool > 0) g.atkCool -= ts;
     g.chasing = false;
-    const ch = CHARS[g.kind], mode = ch.behavior;
+    if (g.gunCool > 0) g.gunCool -= ts;
+    const ch = CHARS[g.kind], mode = g.team ? 'attack' : ch.behavior;
     if (!mode || mode === 'still' || g.dead || g.stun > 0 || g.seat || g.held > 0) continue;
-    if (stepCount - g.touchStep > 3 || g.muscle < 0.5) continue;   // 地面に立っているときだけ
-    const speed = 0.4 + (ch.speed || 2) * 0.5;
+    if (stepCount - g.touchStep > 3 || g.muscle < 0.4) continue;   // 地面に立っているときだけ
+    const speed = 0.4 + (g.team ? 2 : ch.speed || 2) * 0.5;
     let dir = 0, face = 0;
     if (mode === 'attack') {
       const t = nearestTarget(g);
       if (t) {
-        const dx = t.torso.position.x - g.torso.position.x;
+        const dx = t.torso.position.x - g.torso.position.x, dy = t.torso.position.y - g.torso.position.y;
         face = Math.sign(dx) || g.facing;
         g.chasing = true;
-        if (Math.abs(dx) > REACH * 0.7) dir = face;
+        const gun = g.grip && g.grip.ent.T.gun;
+        if (gun && face === g.facing && Math.abs(dx) < 260 * PX && Math.abs(dy) < 40 * PX) {   // 銃を持っていたら、とどく所から撃つ
+          if (!(g.gunCool > 0)) { g.gunCool = gun.auto ? 9 : gun.pellets ? 70 : 45; fire(g.grip.ent, rand(-0.04, 0.04)); }
+        } else if (Math.abs(dx) > REACH * 0.7) dir = face;
         else if (!(g.atkCool > 0)) attackChar(g, t);
       }
     } else {   // wander
@@ -2347,13 +2465,35 @@ function updateAI(ts) {
     }
     if (face && face !== g.facing) turnAround(g);
     if (dir && dir === g.facing) {
+      // 前に進めない（たおれたキャラや物に、つかえている）ときは、ぴょんと とびこえる
+      const vx = Body.getVelocity(g.torso).x;
+      g.stuckT = Math.abs(vx) < speed * 0.25 ? (g.stuckT || 0) + ts : 0;
+      const hop = g.stuckT > 30;
+      if (hop) g.stuckT = 0;
       for (const p of g.parts) {
         if (p.plugin.detached) continue;
         const v = Body.getVelocity(p);
-        Body.setVelocity(p, { x: v.x + (dir * speed - v.x) * 0.25, y: v.y });
+        Body.setVelocity(p, { x: v.x + (dir * speed - v.x) * 0.25, y: hop ? -9 : v.y });
       }
     }
   }
+}
+
+// バックルームでは、ときどきバクテリアが、見えている所のはしから出てくる（バックルームの中にキャラがいるときだけ。2ひきまで）
+let bactTimer = 900;
+function updateBacteria(ts) {
+  if (!currentMap.rooms || (bactTimer -= ts) > 0) return;
+  bactTimer = rand(1100, 1800);
+  const inside = chars.filter((g) => !g.dead && g.kind !== 'bacteria' && g.torso.position.y > (BR.top + BR.ft) * PX);
+  if (!inside.length || chars.filter((g) => g.kind === 'bacteria' && !g.dead).length >= 2) return;
+  const t = inside[Math.floor(Math.random() * inside.length)];
+  const side = Math.random() < 0.5 ? -1 : 1, x = t.torso.position.x + side * (W / cam.z / 2 + 120);
+  const level = Math.floor((t.torso.position.y / PX - BR.top) / BR.lv), y = (BR.top + level * BR.lv + 20) * PX;
+  const stand = surfaceAt(x, y) - FOOT_BELOW_HEAD * PX - 1;
+  if (stand > (BR.top + (level + 1) * BR.lv) * PX) return;   // その階の床が無い所（穴）なら、やめる
+  makeChar('bacteria', x, stand, { facing: -side, guard: 60 });
+  say('…バクテリアが くる', t.head.position.x, t.head.position.y - 60, '#bbbbbb');
+  SND.play('groan', 0.7, 0.6);
 }
 
 // 出血・ケガの回復・出血で死ぬ
@@ -2361,6 +2501,7 @@ function updateChars(ts) {
   for (const g of chars) {
     if (g.healCool > 0) g.healCool -= ts;
     if (g.injCool > 0) g.injCool -= ts;
+    if (g.noclip > 0) updateNoclip(g, ts);
     if (g.grip && g.grip.hand.plugin.detached) unequip(g);
     let bleeding = 0;
     for (const p of g.parts) {
@@ -3625,12 +3766,12 @@ function pullPin(ent) {   // ぬいたピンが飛んでいく
 // ---- 描く ----
 // 絵は画面のこまかさのまま、回転させて描く。だからドット1個1個の形がくずれない（動いてもドットがちらつかない）。
 // off は、物の中心（重さの中心）から絵の基準点までのずれ。
-function drawSprite(b, sprite, ax, ay, flip = 1, off = null) {
+function drawSprite(b, sprite, ax, ay, flip = 1, off = null, res = 1) {
   ctx.save();
   ctx.translate(b.position.x, b.position.y);
   ctx.rotate(b.angle);
   if (off) ctx.translate(off.x, off.y);
-  ctx.scale(PX * flip, PX);
+  ctx.scale(PX * flip / res, PX / res);
   ctx.drawImage(sprite, -ax, -ay);
   ctx.restore();
 }
@@ -3651,11 +3792,13 @@ function drawChar(g) {
     const name = pl.kind === 'head' ? 'head_' + face : pl.sprite;
     const key = pl.kind === 'head' ? 'head' : pl.sprite;
     const [ax, ay] = (CHARS[g.kind].anchor && CHARS[g.kind].anchor[key]) || ANCHOR[key];
+    const res = CHARS[g.kind].res || 1;
     const layers = worn.filter((L) => L.key === key && (!L.seg || L.seg === pl.seg));
     for (const L of layers) if (L.under) drawSprite(p, L.img, ax - L.ox, ay - L.oy, g.facing);
-    drawSprite(p, getSprite(g.kind, name, level, burn), ax, ay, g.facing);
+    drawSprite(p, getSprite(g.kind, name, level, burn), ax * res, ay * res, g.facing, null, res);
     for (const L of layers) if (!L.under) drawSprite(p, L.img, ax - L.ox, ay - L.oy, g.facing);
   }
+  if (g.team && !g.dead) drawTeamMark(g);
 }
 function drawThing(ent) {
   drawSprite(ent.body, ent.lit && ent.T.litSprite ? OBJ_SPRITES[ent.T.litSprite] : ent.sprite, ent.ax, ent.ay, ent.facing, ent.off);
@@ -3811,7 +3954,7 @@ let statsText = '';
 function updateStats() {
   let alive = 0;
   for (const g of chars) if (!g.dead) alive++;
-  const t = `🍇 ${alive}　💀 ${deadCount}　🪙 ${SHOP.coins()}` + (currentMap.endless ? `　📏 ${endlessBest}m` : '');
+  const t = `🍇 ${alive}　💀 ${deadCount}　🪙 ${SHOP.coins()}` + (currentMap.endless && !currentMap.rooms ? `　📏 ${endlessBest}m` : '');
   if (t !== statsText) { statsText = t; byId('stats').textContent = t; }
 }
 
@@ -3824,6 +3967,8 @@ function step() {
   updateHeld();
   updateGrips();
   updateAI(ts);
+  updateBacteria(ts);
+  if (stepCount % 15 === 0) updateWar();
   updateThings(ts);
   updateTrain(ts);
   updateShells(ts);
@@ -3845,7 +3990,7 @@ function step() {
 // エンドレスのマップで、どこまで遠くへ行ったか（メートル）
 let endlessBest = 0;
 function updateDistance() {
-  if (!currentMap.endless) return;
+  if (!currentMap.endless || currentMap.rooms) return;
   let far = 0;
   for (const g of chars) far = Math.max(far, Math.abs(g.torso.position.x));
   for (const o of objects) far = Math.max(far, Math.abs(o.body.position.x));
@@ -4098,6 +4243,8 @@ const TUTORIAL = [
   ['👆', 'タップして つかう', '出した物を、タップしてみよう。じゅうは うつ、ばくだんは 火がつく、チェーンソーは 動く、ふうせんは われるよ。のりものは、タップで 走る・止まる。'],
   ['👆👆', 'ダブルタップ', 'キャラをすばやく2回タップすると、小さいメニューが出るよ。ころす、生き返らせる、もやす、ふくをきせる、ステータス（体力や血などが見られる）が えらべるよ。'],
   ['✊', 'ぶきを持たせる', 'キャラの手（下のうで）をつかむと、「もつ」ボタンが出るよ。手のちかくにころがっている武器で、ボタンを押すと、手に固定されるよ。もう一度、手をつかんで「はなす」を押すと、はなれるよ。'],
+  ['🟨', 'バックルーム', '上の部屋の、ゆがんだ床にキャラをのせるか、床に強く投げつけると、床をすりぬけて（ノークリップ）、バックルームに落ちるよ。どこまでも続いているよ。バクテリアに気をつけてね。'],
+  ['🕶', 'モード', 'アイテムの「モード」タブで、戦争モードと3Dモードが えらべるよ。戦争モードは、赤チームと青チームが自動で戦う。3Dモードは、自分の目で歩いて、銃をひろって、フルーツのキャラたちと撃ちあう。最後の1人になったら勝ち！ 3Dのバックルームは、出口を見つけたらクリア！'],
   ['🚗', 'のりもの', 'キャラをつかんで、のりものの席の近くではなすと、乗るよ。のりものを タップすると、走りだすよ。乗っている人を つかんで引っぱると、おりるよ。'],
   ['💉', 'ちゅうしゃ', '「ちゅうしゃ」タブの針を、キャラに さしてみよう。みどりは 治す（頭があれば、死んでいても生き返る）、むらさきは どく、青は ねむる、こい緑は ゾンビになる、赤は ちが ぬけるよ。'],
   ['🔍', '画面を動かす', '何もない所を ドラッグすると、画面が動くよ。2本の指（マウスなら ホイール）で、アップ・ルーズ。右下の ルーズ・アップ ボタンでも できるよ。'],
@@ -4309,6 +4456,67 @@ function pressGrip() {
 }
 gripBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); pressGrip(); });
 
+
+// ---- 戦争モード ----
+// 赤チームと青チームが、武器を持って、自動で戦う。見えている所の左に赤、右に青をならべる。どちらかが全員たおれたら、勝負あり。
+// 自分も、ばくだんを落としたり、キャラをつかんで投げたりして、参加できる
+const TEAM_COLORS = { red: '#e23b3b', blue: '#3c7dd9' };
+const WAR_KINDS = ['grape', 'muscat', 'strawberry', 'banana', 'peach', 'lemon', 'watermelon', 'blueberry', 'robot'];
+const WAR_WEAPONS = ['knife', 'katana', 'bat', 'cleaver', 'club', 'hammer', 'pan', 'pistol', 'shotgun', 'mgun', 'sword', 'sledge'];
+let war = null;
+function startWar(n) {
+  stopWar(true);
+  const span = Math.min(W / cam.z, (worldX1 - worldX0) || Infinity), mid = cam.x + W / cam.z / 2;
+  const kinds = WAR_KINDS.filter((k) => !SHOP.locked(k)), weapons = WAR_WEAPONS.filter(canEquip);
+  for (const [team, side] of [['red', -1], ['blue', 1]]) {
+    for (let k = 0; k < n; k++) {
+      const x = clamp(mid + side * span * (0.12 + 0.3 * (n > 1 ? k / (n - 1) : 0)), worldX0 + 10 * PX, worldX1 - 10 * PX);
+      const stand = surfaceAt(x, cam.y + 1) - FOOT_BELOW_HEAD * PX - 1;
+      const g = makeChar(kinds[Math.floor(Math.random() * kinds.length)], x, stand, { facing: -side, guard: 90 });
+      g.team = team;
+      g.paid = true;   // 戦争のキャラは、たおしてもコインはもらえない（何度でも出せるので）
+      if (weapons.length) equip(g, weapons[Math.floor(Math.random() * weapons.length)]);
+    }
+  }
+  war = { n, step: stepCount, lastDead: deadCount };
+  say('⚔ 戦争スタート！', mid, cam.y + H / cam.z * 0.25, '#ffd24a');
+  SND.play('quest', 0.8);
+  SHOP.event('war');
+}
+function stopWar(quiet) {
+  if (!war) return;
+  war = null;
+  for (const g of chars) g.team = null;
+  if (!quiet) say('戦争おわり', cam.x + W / cam.z / 2, cam.y + H / cam.z * 0.25, '#ffffff');
+}
+function updateWar() {
+  if (!war) return;
+  const alive = { red: 0, blue: 0 };
+  for (const g of chars) if (g.team && !g.dead && legSupport(g)) alive[g.team]++;   // 足がおれたり、とれたりして立てないキャラは、もう戦えない
+  if (deadCount !== war.lastDead) { war.lastDead = deadCount; war.step = stepCount; }
+  const timeUp = stepCount - war.step > 2400;   // 40びょう、だれもたおれなかったら、時間切れ（多く残っているチームの勝ち）
+  if (alive.red && alive.blue && !timeUp) return;
+  const winner = alive.red > alive.blue ? 'red' : alive.blue > alive.red ? 'blue' : null;
+  if (timeUp) say('⏰ 時間切れ！', cam.x + W / cam.z / 2, cam.y + H / cam.z * 0.18, '#ffffff');
+  war = null;
+  for (const g of chars) g.team = null;
+  const text = winner === 'red' ? '🟥 赤チームの勝ち！' : winner === 'blue' ? '🟦 青チームの勝ち！' : 'ひきわけ！';
+  say(text, cam.x + W / cam.z / 2, cam.y + H / cam.z * 0.25, winner ? TEAM_COLORS[winner] : '#ffffff');
+  SHOP.toast(tr(text));
+  SND.play('quest', 1);
+  SHOP.event('warEnd');
+}
+// チームの目じるし：頭の上の、チームの色の三角
+function drawTeamMark(g) {
+  const h = g.head.position, y = h.y - 9 * PX;
+  ctx.fillStyle = LINE_COLOR;
+  ctx.fillRect(h.x - 3.5 * PX, y - 0.5 * PX, 7 * PX, 3 * PX);
+  ctx.fillRect(h.x - 1.5 * PX, y + 2 * PX, 3 * PX, 2 * PX);
+  ctx.fillStyle = TEAM_COLORS[g.team];
+  ctx.fillRect(h.x - 3 * PX, y, 6 * PX, 2 * PX);
+  ctx.fillRect(h.x - PX, y + 2 * PX, 2 * PX, PX);
+}
+
 // ---- ダブルタップで出る小さいメニュー（ころす・生き返らせる・もやす） ----
 const petMenu = byId('petMenu');
 let petPos = { x: 0, y: 0 };
@@ -4365,6 +4573,7 @@ const TABS = [
   { id: 'things', name: 'もの', hint: '風船は、つかんでさわらせると、ひもでつながる。持った物は、下を向いてぶら下がる。2本の指で持つと、向きを決められる。' },
   { id: 'syringes', name: 'ちゅうしゃ', hint: '針を刺すと、いろいろなことが起きる。緑は治す、むらさきはどく、青はねむらせる、黒ずんだ緑はゾンビにする、赤はちをぬく。' },
   { id: 'clothes', name: 'ふく', hint: 'ふくを、キャラの上にスワイプして、はなすと着る。ダブルタップのメニューからも着せられる。ヘルメットとよろいは、ダメージが半分になる。' },
+  { id: 'modes', name: 'モード', hint: '戦争モード：赤チームと青チームが、武器を持って戦う。3Dモード：自分の目で、マップを歩きまわる。' },
   { id: 'clean', name: 'そうじ', hint: 'ボタンを押すと、消える。' },
   { id: 'mods', name: 'モッド', hint: 'モッドエディターで作ったキャラや物。「＋ 作る」で新しく作れる。' },
 ];
@@ -4413,8 +4622,8 @@ function renderDrawer() {
   }
   const itemsEl = byId('items');
   itemsEl.textContent = '';
-  if (tab === 'clean') {
-    for (const [icon, label, fn] of CLEANERS) {
+  if (tab === 'clean' || tab === 'modes') {
+    for (const [icon, label, fn] of tab === 'clean' ? CLEANERS : MODE_BUTTONS) {
       const el = document.createElement('button');
       el.className = 'item make';
       el.dataset.clean = label;
@@ -4485,8 +4694,9 @@ function onItemDown(e) {
   const gx = ghost.getContext('2d');
   gx.clearRect(0, 0, icon.width, icon.height);
   gx.drawImage(icon, 0, 0);
-  ghost.style.width = icon.width * PX * cam.z + 'px';
-  ghost.style.height = icon.height * PX * cam.z + 'px';
+  const res = (CHARS[it.id] && CHARS[it.id].res) || 1;
+  ghost.style.width = icon.width * PX * cam.z / res + 'px';
+  ghost.style.height = icon.height * PX * cam.z / res + 'px';
   ghost.dataset.flip = facing;
 }
 function placeGhost(x, y) {
@@ -4572,6 +4782,12 @@ function clearDecals() {
   sctx.clearRect(0, 0, stain.width, stain.height);
   for (const ch of chunks.values()) if (ch.sctx) ch.sctx.clearRect(0, 0, CHUNK, currentMap.h);
 }
+const MODE_BUTTONS = [
+  ['⚔', '戦争（5たい5）', () => { startWar(5); closeDrawer(); }],
+  ['⚔', '戦争（10たい10）', () => { startWar(10); closeDrawer(); }],
+  ['🏳', '戦争をやめる', () => stopWar()],
+  ['🕶', '3Dモード', () => { closeDrawer(); if (window.Grape3D) window.Grape3D.start(currentMap.id); }],
+];
 const CLEANERS = [
   ['🧹', 'ぜんぶ消す', () => clearAll()],
   ['🧍', 'いきものを消す', clearLiving],
@@ -4580,6 +4796,7 @@ const CLEANERS = [
   ['🩸', 'よごれを消す', clearDecals],
 ];
 function clearAll() {
+  war = null;
   closePetMenu();
   releaseAllPointers();
   follow = null;
@@ -4804,15 +5021,27 @@ function modPal(m) {
   m.colors.forEach((c, i) => { pal[MOD_KEYS[i]] = c; });
   return pal;
 }
+// こまかい（2倍の）モッドのキャラの顔：顔のドットを、2×2 にして、2倍の場所に置く
+function scaleFaces(faces, r) {
+  if (r === 1) return faces;
+  const out = {};
+  for (const [k, list] of Object.entries(faces)) {
+    out[k] = list.flatMap(([row, col, ch]) => [[0, 0], [0, 1], [1, 0], [1, 1]].map(([dr, dc]) => [(row + 2) * r - 2 + dr, col * r + dc, ch]));
+  }
+  return out;
+}
 function modChar(m) {
   const rgb = [1, 3, 5].map((i) => parseInt(m.blood.slice(i, i + 2), 16)).join(', ');
+  const res = m.res === 2 ? 2 : 1;
   // どう・うで・あしを描いていれば、それを使う（あしの絵は、ふとももと すね の りょうほうに使う）。かいていなければ、ふつうの形のまま
   const hasTorso = hasPart(m.torsoPx), hasArm = hasPart(m.armPx), hasLeg = hasPart(m.legPx);
-  const build = (hasTorso || hasArm || hasLeg) ? {
-    torso: hasTorso ? modPartRows(m.torsoPx) : undefined, arm: hasArm ? modPartRows(m.armPx) : undefined,
-    legU: hasLeg ? modPartRows(m.legPx) : undefined, legL: hasLeg ? modPartRows(m.legPx) : undefined,
+  // こまかいキャラで、かいていない所は、ふつうの形を2倍にして使う
+  const up = (rows) => (res === 1 ? undefined : rows.flatMap((r) => { const w = [...r].map((ch) => ch + ch).join(''); return [w, w]; }));
+  const build = (hasTorso || hasArm || hasLeg || res > 1) ? {
+    torso: hasTorso ? modPartRows(m.torsoPx) : up(TORSO), arm: hasArm ? modPartRows(m.armPx) : up(ARM),
+    legU: hasLeg ? modPartRows(m.legPx) : up(LEG_UPPER), legL: hasLeg ? modPartRows(m.legPx) : up(LEG_LOWER),
   } : undefined;
-  return { name: m.name, mod: true, head: modRows(m), faces: MOD_FACES[m.face] || FRUIT_FACES, tough: m.tough,
+  return { name: m.name, mod: true, head: modRows(m), faces: scaleFaces(MOD_FACES[m.face] || FRUIT_FACES, res), res, tough: m.tough,
            undead: m.undead, behavior: m.behavior, speed: m.speed, power: m.power, build,
            density: [0.0014, 0.002, 0.004][m.weight], sparks: m.sparks, bleedRate: m.sparks ? 0.5 : 1,
            blood: m.blood, stain: shadeColor(m.blood, -70), hurtTint: rgb,
@@ -4865,7 +5094,7 @@ function syncMods() {
 }
 // モッドエディターで作っている物の絵（ゲームと同じ作り方）
 function modPreview(m) {
-  return m.type === 'char' ? makeFigure(null, makeCharSprites(modChar(m))) : makeSprite(modRows(m), modPal(m));
+  return m.type === 'char' ? makeFigure(null, makeCharSprites(modChar(m)), m.res === 2 ? 2 : 1) : makeSprite(modRows(m), modPal(m));
 }
 if (MODS) MODS.onChange(syncMods);
 
@@ -4906,6 +5135,7 @@ window.GRAPE = {
   clearAll, clearLiving, clearCorpses, clearThings, clearDecals,
   petMenu: (i) => { const g = chars[i]; const s = worldToScreen(g.torso.position.x, g.torso.position.y); openPetMenu(g, s.x, s.y); },
   ignite: (i) => ignite(chars[i]),
+  startWar, stopWar, war: () => (war ? { n: war.n } : null), team: (i) => chars[i].team || null,
   bite: (i, j, only) => attackChar(chars[i], chars[j], only),
   ai: (i) => ({ facing: chars[i].facing, chasing: !!chars[i].chasing, kind: chars[i].kind }),
   callTrain: (mode, dir) => { const e = callTrain(mode, dir); return e ? objects.indexOf(e) : -1; },
@@ -4964,6 +5194,14 @@ window.GRAPE = {
   // 時間を止めて、1コマずつ進める（テスト用）
   setPaused: (b) => { paused = b; byId('btnPause').textContent = paused ? '▶' : '⏸'; },
   step: (n = 1) => { for (let i = 0; i < n; i++) step(); render(); },
+  // 3D モード（3d.js）が使う絵と、マップの情報
+  art3d: {
+    figure: (k) => FIGURES[k] || null, res: (k) => (CHARS[k] && CHARS[k].res) || 1, obj: (n) => OBJ_SPRITES[n] || null,
+    kinds: () => Object.keys(CHARS).filter((k) => !CHARS[k].hidden && !SHOP.locked(k) && k !== 'bacteria'),
+    map: (id) => { const m = MAPS.find((q) => q.id === id) || MAPS[0]; return { id: m.id, name: tr(m.name), sky: m.sky, theme: m.theme }; },
+    current: () => currentMap.id,
+    palette: (k) => { const c = CHARS[k] || CHARS.grape; return Object.assign({}, CHAR_COMMON, c.pal, { blood: c.blood, name: nameOf(k) }); },
+  },
   _debug: { chars, objects, engine, cam, tracers, shells },
 };
 
@@ -4985,6 +5223,6 @@ renderDrawer();
 if (!settings.newsSeen && NEWS.length) { settings.newsSeen = window.__returning ? '0.8' : NEWS[0].id; saveSettings(); }
 showView('home');
 updateNewsBadge();
-if (!navigator.webdriver) checkNews();
+if (MODS && MODS.fromLink()) { /* QR コードから開いた：コードを読みこむ画面を先に出す */ } else if (!navigator.webdriver) checkNews();
 requestAnimationFrame(frame);
 })();
